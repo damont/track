@@ -1,0 +1,26 @@
+services:
+  track-api:
+    build:
+      context: .
+      target: backend
+    ports:
+      - "8010:8010"
+    environment:
+      - MONGODB_URL=mongodb://host.docker.internal:27017
+      - MONGODB_DB_NAME=track
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  track-frontend:
+    build:
+      context: .
+      target: frontend
+      args:
+        - VITE_API_URL=http://localhost:8010
+    ports:
+      - "8090:80"
+    depends_on:
+      - track-api
+    restart: unless-stopped
