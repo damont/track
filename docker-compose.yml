@@ -17,8 +17,7 @@ services:
     build:
       context: .
       target: frontend
-      args:
-        - VITE_API_URL=http://localhost:8010
+      args: []
     ports:
       - "8090:80"
     depends_on:
