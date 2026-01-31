@@ -25,10 +25,6 @@ FROM node:20-slim AS frontend-build
 
 WORKDIR /app
 
-# Build argument for API URL
-ARG VITE_API_URL=http://localhost:8010
-ENV VITE_API_URL=${VITE_API_URL}
-
 # Copy package files
 COPY frontend/package*.json ./
 
