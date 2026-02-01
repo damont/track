@@ -29,7 +29,6 @@ export function TaskDetail() {
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editNotes, setEditNotes] = useState('');
-  const [editCategoryId, setEditCategoryId] = useState<string>('');
   const [showStatusHistory, setShowStatusHistory] = useState(false);
 
   useEffect(() => {
@@ -37,7 +36,6 @@ export function TaskDetail() {
       setEditName(selectedTask.name);
       setEditDescription(selectedTask.description || '');
       setEditNotes(selectedTask.notes || '');
-      setEditCategoryId(selectedTask.category_id || '');
     }
   }, [selectedTask]);
 
@@ -54,7 +52,6 @@ export function TaskDetail() {
       name: editName,
       description: editDescription || undefined,
       notes: editNotes || undefined,
-      category_id: editCategoryId || undefined,
     });
     setIsEditing(false);
   };
@@ -83,7 +80,7 @@ export function TaskDetail() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div>
       <div className="rounded-lg p-6 space-y-6" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -129,7 +126,7 @@ export function TaskDetail() {
                 <button
                   onClick={handleDelete}
                   className="px-3 py-1 text-sm"
-                  style={{ color: '#f87171' }}
+                  style={{ color: '#c06464' }}
                 >
                   Delete
                 </button>
@@ -171,25 +168,19 @@ export function TaskDetail() {
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
               Category
             </label>
-            {isEditing ? (
-              <select
-                value={editCategoryId}
-                onChange={(e) => setEditCategoryId(e.target.value)}
-                className="px-3 py-2 rounded text-sm focus:outline-none"
-                style={inputStyle}
-              >
-                <option value="">No category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="px-3 py-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                {categories.find((c) => c.id === selectedTask.category_id)?.name || 'None'}
-              </div>
-            )}
+            <select
+              value={selectedTask.category_id || ''}
+              onChange={(e) => updateTask(selectedTask.id, { category_id: e.target.value })}
+              className="px-3 py-2 rounded text-sm focus:outline-none"
+              style={inputStyle}
+            >
+              <option value="">No category</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
