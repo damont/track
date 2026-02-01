@@ -5,7 +5,7 @@ export function CategoryFilter() {
   const { categories, filter, setFilter, createCategory, deleteCategory } = useTasks();
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#E95420');
+  const [newCategoryColor, setNewCategoryColor] = useState('#6c8aec');
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
@@ -37,7 +37,7 @@ export function CategoryFilter() {
 
         <button
           onClick={() => setShowNewCategory(!showNewCategory)}
-          className="px-2 py-1.5 rounded text-sm font-medium"
+          className="px-2 py-1.5 rounded text-sm font-medium whitespace-nowrap"
           style={{
             backgroundColor: 'var(--bg-raised)',
             border: '1px solid var(--border-color)',
@@ -45,7 +45,7 @@ export function CategoryFilter() {
           }}
           title="Add category"
         >
-          +
+          {categories.length === 0 ? '+ Category' : '+'}
         </button>
 
         {filter.categoryId && (

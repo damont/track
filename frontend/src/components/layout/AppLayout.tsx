@@ -14,7 +14,13 @@ export function AppLayout({ sidebar, children }: AppLayoutProps) {
       {/* Header */}
       <header style={{ backgroundColor: 'var(--header-bg)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-semibold" style={{ color: 'var(--accent)' }}>Track</h1>
+          <div className="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" className="w-7 h-7">
+              <rect x="2" y="2" width="28" height="28" rx="6" stroke="var(--accent)" strokeWidth="2.5"/>
+              <path d="M9 16.5L14 21.5L23 11" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <h1 className="text-xl font-semibold" style={{ color: 'var(--accent)' }}>Track</h1>
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               {user?.display_name || user?.username}

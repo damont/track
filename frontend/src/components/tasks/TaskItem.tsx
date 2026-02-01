@@ -10,11 +10,11 @@ interface TaskItemProps {
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  pending: { bg: 'rgba(156, 163, 175, 0.2)', text: '#9ca3af' },
-  in_progress: { bg: 'rgba(96, 165, 250, 0.2)', text: '#60a5fa' },
-  on_hold: { bg: 'rgba(251, 191, 36, 0.2)', text: '#fbbf24' },
-  completed: { bg: 'rgba(74, 222, 128, 0.2)', text: '#4ade80' },
-  cancelled: { bg: 'rgba(248, 113, 113, 0.2)', text: '#f87171' },
+  pending: { bg: 'rgba(148, 153, 165, 0.15)', text: '#8b8fa0' },
+  in_progress: { bg: 'rgba(108, 138, 236, 0.15)', text: '#6c8aec' },
+  on_hold: { bg: 'rgba(214, 174, 82, 0.15)', text: '#c9a84c' },
+  completed: { bg: 'rgba(82, 184, 120, 0.15)', text: '#52b878' },
+  cancelled: { bg: 'rgba(200, 100, 100, 0.15)', text: '#c06464' },
 };
 
 const statusLabels: Record<string, string> = {
@@ -82,7 +82,7 @@ export function TaskItem({ task, isSelected, onSelect }: TaskItemProps) {
           {task.next_step_description ? (
             <div
               className="flex items-center gap-2 mt-1.5 px-2.5 py-1.5 rounded"
-              style={{ backgroundColor: 'rgba(233, 84, 32, 0.12)', border: '1px solid rgba(233, 84, 32, 0.25)' }}
+              style={{ backgroundColor: 'rgba(108, 138, 236, 0.1)', border: '1px solid rgba(108, 138, 236, 0.2)' }}
             >
               <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />

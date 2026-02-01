@@ -6,11 +6,11 @@ interface StatusHistoryProps {
 }
 
 const statusColors: Record<TaskStatus, { bg: string; text: string }> = {
-  pending: { bg: 'rgba(156, 163, 175, 0.2)', text: '#9ca3af' },
-  in_progress: { bg: 'rgba(96, 165, 250, 0.2)', text: '#60a5fa' },
-  on_hold: { bg: 'rgba(251, 191, 36, 0.2)', text: '#fbbf24' },
-  completed: { bg: 'rgba(74, 222, 128, 0.2)', text: '#4ade80' },
-  cancelled: { bg: 'rgba(248, 113, 113, 0.2)', text: '#f87171' },
+  pending: { bg: 'rgba(148, 153, 165, 0.15)', text: '#8b8fa0' },
+  in_progress: { bg: 'rgba(108, 138, 236, 0.15)', text: '#6c8aec' },
+  on_hold: { bg: 'rgba(214, 174, 82, 0.15)', text: '#c9a84c' },
+  completed: { bg: 'rgba(82, 184, 120, 0.15)', text: '#52b878' },
+  cancelled: { bg: 'rgba(200, 100, 100, 0.15)', text: '#c06464' },
 };
 
 const statusLabels: Record<TaskStatus, string> = {
