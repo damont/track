@@ -77,30 +77,10 @@ export function NoteDetail() {
     }
   };
 
-  // Text selection toolbar
-  const handleMouseUp = () => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim().length > 0) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      const containerRect = textareaRef.current?.parentElement?.getBoundingClientRect();
-
-      if (containerRect) {
-        setToolbarPos({
-          top: rect.top - containerRect.top - 44,
-          left: rect.left - containerRect.left + rect.width / 2,
-        });
-      }
-      setSelectedText(selection.toString().trim());
-      setShowToolbar(true);
-    } else {
-      setShowToolbar(false);
-      setShowTaskPicker(false);
-    }
-  };
-
-  // Handle selection changes in textarea (where getSelection doesn't give range rects)
-  const handleTextareaMouseUp = () => {
+  // Handle text selection in textarea
+  // Note: window.getSelection() doesn't work with textareas —
+  // must use selectionStart/selectionEnd instead.
+  const handleTextareaMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -109,13 +89,12 @@ export function NoteDetail() {
     if (start !== end) {
       const text = textarea.value.substring(start, end).trim();
       if (text) {
-        // Position toolbar above the textarea
-        const rect = textarea.getBoundingClientRect();
+        // Position toolbar near the mouse cursor
         const containerRect = textarea.parentElement?.getBoundingClientRect();
         if (containerRect) {
           setToolbarPos({
-            top: -44,
-            left: rect.width / 2,
+            top: e.clientY - containerRect.top - 50,
+            left: e.clientX - containerRect.left,
           });
         }
         setSelectedText(text);
@@ -276,7 +255,7 @@ export function NoteDetail() {
           <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
             Content
           </label>
-          <div className="relative" onMouseUp={handleMouseUp}>
+          <div className="relative">
             <textarea
               ref={textareaRef}
               value={editContent}
@@ -306,6 +285,7 @@ export function NoteDetail() {
               >
                 <div
                   className="rounded-lg px-2 py-1.5 flex items-center gap-1"
+                  onMouseDown={(e) => e.preventDefault()}
                   style={{
                     backgroundColor: 'var(--bg-raised)',
                     border: '1px solid var(--border-color)',
@@ -339,6 +319,7 @@ export function NoteDetail() {
                 {showTaskPicker && (
                   <div
                     className="mt-1 rounded-lg overflow-hidden max-h-48 overflow-y-auto"
+                    onMouseDown={(e) => e.preventDefault()}
                     style={{
                       backgroundColor: 'var(--bg-raised)',
                       border: '1px solid var(--border-color)',
