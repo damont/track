@@ -62,6 +62,17 @@ export interface Category {
   order: number;
 }
 
+export interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  pinned: boolean;
+  order: number;
+  tags: string[];
+  category_id: string | null;
+}
+
 export interface User {
   id: string;
   email: string;
