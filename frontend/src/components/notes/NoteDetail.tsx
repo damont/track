@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNotes } from '../../context/NoteContext';
 import { useTasks } from '../../context/TaskContext';
+import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 import { Task, TaskListItem } from '../../types';
 
@@ -22,7 +23,8 @@ export function NoteDetail() {
     deleteNote,
     selectNote,
   } = useNotes();
-  const { fetchTasks } = useTasks();
+  const { tasks, fetchTasks, linkNote, unlinkNote } = useTasks();
+  const { navigateToTask } = useApp();
 
   const [editContent, setEditContent] = useState('');
   const [showToolbar, setShowToolbar] = useState(false);
@@ -30,9 +32,12 @@ export function NoteDetail() {
   const [selectedText, setSelectedText] = useState('');
   const [showTaskPicker, setShowTaskPicker] = useState(false);
   const [activeTasks, setActiveTasks] = useState<TaskListItem[]>([]);
+  const [showLinkTaskPicker, setShowLinkTaskPicker] = useState(false);
+  const [linkableTasks, setLinkableTasks] = useState<TaskListItem[]>([]);
   const [toast, setToast] = useState<ToastState>({ message: '', visible: false });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const linkPickerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -80,9 +85,6 @@ export function NoteDetail() {
   };
 
   // Handle text selection in textarea
-  // Note: window.getSelection() doesn't work with textareas —
-  // must use selectionStart/selectionEnd instead.
-  // Uses fixed positioning so the toolbar never clips under the sidebar.
   const handleTextareaMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -92,8 +94,6 @@ export function NoteDetail() {
     if (start !== end) {
       const text = textarea.value.substring(start, end).trim();
       if (text) {
-        // Use viewport coordinates (fixed positioning)
-        // Clamp so toolbar stays fully visible
         const toolbarWidth = 280;
         const toolbarHeight = 40;
         const left = Math.max(toolbarWidth / 2, Math.min(e.clientX, window.innerWidth - toolbarWidth / 2));
@@ -150,6 +150,43 @@ export function NoteDetail() {
     }
   };
 
+  // "Link to Task" picker
+  const handleShowLinkTaskPicker = async () => {
+    if (!selectedNote) return;
+    try {
+      const allTasks = await api.get<TaskListItem[]>('/api/tasks?active=true');
+      // Filter out tasks that already link this note
+      const available = allTasks.filter(
+        t => !(t.linked_note_ids || []).includes(selectedNote.id)
+      );
+      setLinkableTasks(available);
+      setShowLinkTaskPicker(true);
+    } catch {
+      showToast('Failed to fetch tasks');
+    }
+  };
+
+  const handleLinkToTask = async (taskId: string, taskName: string) => {
+    if (!selectedNote) return;
+    try {
+      await linkNote(taskId, selectedNote.id);
+      showToast(`Linked to ${taskName}`);
+      setShowLinkTaskPicker(false);
+    } catch {
+      showToast('Failed to link note');
+    }
+  };
+
+  const handleUnlinkFromTask = async (taskId: string) => {
+    if (!selectedNote) return;
+    try {
+      await unlinkNote(taskId, selectedNote.id);
+      showToast('Unlinked from task');
+    } catch {
+      showToast('Failed to unlink');
+    }
+  };
+
   // Close toolbar on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -164,6 +201,19 @@ export function NoteDetail() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showToolbar]);
 
+  // Close link picker on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (linkPickerRef.current && !linkPickerRef.current.contains(e.target as Node)) {
+        setShowLinkTaskPicker(false);
+      }
+    };
+    if (showLinkTaskPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showLinkTaskPicker]);
+
   if (!selectedNote) {
     return (
       <div className="h-full flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
@@ -171,6 +221,11 @@ export function NoteDetail() {
       </div>
     );
   }
+
+  // Find tasks that link to this note
+  const linkedTasks = tasks.filter(
+    t => (t.linked_note_ids || []).includes(selectedNote.id)
+  );
 
   const handleDelete = async () => {
     if (confirm('Delete this note?')) {
@@ -355,6 +410,85 @@ export function NoteDetail() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Linked Tasks */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Linked Tasks</h3>
+            <div className="relative" ref={linkPickerRef}>
+              <button
+                onClick={handleShowLinkTaskPicker}
+                className="text-sm hover:underline"
+                style={{ color: 'var(--accent)' }}
+              >
+                + Link to Task
+              </button>
+
+              {/* Task picker dropdown */}
+              {showLinkTaskPicker && (
+                <div
+                  className="absolute right-0 top-full mt-1 rounded-lg overflow-hidden max-h-48 overflow-y-auto z-50"
+                  style={{
+                    backgroundColor: 'var(--bg-raised)',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                    minWidth: '260px',
+                  }}
+                >
+                  {linkableTasks.length === 0 ? (
+                    <div className="px-3 py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      No tasks available
+                    </div>
+                  ) : (
+                    linkableTasks.map((task) => (
+                      <button
+                        key={task.id}
+                        onClick={() => handleLinkToTask(task.id, task.name)}
+                        className="w-full text-left px-3 py-2 text-xs truncate block"
+                        style={{ color: 'var(--text-primary)' }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--selected-bg)'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        {task.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {linkedTasks.map((task) => (
+            <div key={task.id} className="p-3 rounded-lg group" style={{ backgroundColor: 'var(--bg-raised)' }}>
+              <div className="flex items-start justify-between">
+                <div
+                  className="cursor-pointer flex-1 min-w-0"
+                  onClick={() => navigateToTask(task.id)}
+                >
+                  <span className="text-sm" style={{ color: 'var(--accent)' }}>
+                    {task.name}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleUnlinkFromTask(task.id)}
+                  className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: 'var(--text-muted)' }}
+                  title="Unlink task"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {linkedTasks.length === 0 && (
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              No linked tasks
+            </div>
+          )}
         </div>
 
         {/* Metadata */}

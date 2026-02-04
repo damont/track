@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { api } from '../api/client';
 import { Task, TaskListItem, Category, TaskStatus } from '../types';
 import { useAuth } from './AuthContext';
+import { useApp } from './AppContext';
 
 interface TaskContextType {
   tasks: TaskListItem[];
@@ -41,6 +42,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
+  const { pendingTaskId, clearPendingTask } = useApp();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -89,14 +91,22 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setFilterState(prev => ({ ...prev, ...newFilter }));
   };
 
-  const selectTask = async (taskId: string | null) => {
+  const selectTask = useCallback(async (taskId: string | null) => {
     if (!taskId) {
       setSelectedTask(null);
       return;
     }
     const task = await api.get<Task>(`/api/tasks/${taskId}`);
     setSelectedTask(task);
-  };
+  }, []);
+
+  // Handle navigation from other parts of the app (e.g. note linked tasks)
+  useEffect(() => {
+    if (pendingTaskId) {
+      selectTask(pendingTaskId);
+      clearPendingTask();
+    }
+  }, [pendingTaskId, selectTask, clearPendingTask]);
 
   const createTask = async (data: { name: string; description?: string; category_id?: string; notes?: string }) => {
     const task = await api.post<Task>('/api/tasks', data);

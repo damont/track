@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTasks } from '../../context/TaskContext';
 import { useNotes } from '../../context/NoteContext';
 import { useApp } from '../../context/AppContext';
@@ -25,7 +25,6 @@ export function TaskDetail() {
     completeTask,
     reactivateTask,
     selectTask,
-    linkNote,
     unlinkNote,
   } = useTasks();
   const { notes } = useNotes();
@@ -36,8 +35,6 @@ export function TaskDetail() {
   const [editDescription, setEditDescription] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [showStatusHistory, setShowStatusHistory] = useState(false);
-  const [showNotePicker, setShowNotePicker] = useState(false);
-  const notePickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedTask) {
@@ -46,19 +43,6 @@ export function TaskDetail() {
       setEditNotes(selectedTask.notes || '');
     }
   }, [selectedTask]);
-
-  // Close note picker on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notePickerRef.current && !notePickerRef.current.contains(e.target as Node)) {
-        setShowNotePicker(false);
-      }
-    };
-    if (showNotePicker) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotePicker]);
 
   if (!selectedTask) {
     return (
@@ -94,11 +78,6 @@ export function TaskDetail() {
     }
   };
 
-  const handleLinkNote = async (noteId: string) => {
-    await linkNote(selectedTask.id, noteId);
-    setShowNotePicker(false);
-  };
-
   const handleUnlinkNote = async (noteId: string) => {
     await unlinkNote(selectedTask.id, noteId);
   };
@@ -107,10 +86,6 @@ export function TaskDetail() {
   const linkedNotes: Note[] = (selectedTask.linked_note_ids || [])
     .map(id => notes.find(n => n.id === id))
     .filter((n): n is Note => n !== undefined);
-
-  // Available notes for picker (exclude already linked)
-  const linkedSet = new Set(selectedTask.linked_note_ids || []);
-  const availableNotes = notes.filter(n => !linkedSet.has(n.id));
 
   const inputStyle = {
     backgroundColor: 'var(--bg-raised)',
@@ -282,50 +257,7 @@ export function TaskDetail() {
 
         {/* Linked Notes */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Linked Notes</h3>
-            <div className="relative" ref={notePickerRef}>
-              <button
-                onClick={() => setShowNotePicker(!showNotePicker)}
-                className="text-sm hover:underline"
-                style={{ color: 'var(--accent)' }}
-              >
-                + Attach
-              </button>
-
-              {/* Note picker dropdown */}
-              {showNotePicker && (
-                <div
-                  className="absolute right-0 top-full mt-1 rounded-lg overflow-hidden max-h-48 overflow-y-auto z-50"
-                  style={{
-                    backgroundColor: 'var(--bg-raised)',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                    minWidth: '260px',
-                  }}
-                >
-                  {availableNotes.length === 0 ? (
-                    <div className="px-3 py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                      No notes available
-                    </div>
-                  ) : (
-                    availableNotes.map((note) => (
-                      <button
-                        key={note.id}
-                        onClick={() => handleLinkNote(note.id)}
-                        className="w-full text-left px-3 py-2 text-xs truncate block"
-                        style={{ color: 'var(--text-primary)' }}
-                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--selected-bg)'}
-                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        {note.content.split('\n')[0].substring(0, 80) || 'Untitled Note'}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          <h3 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Linked Notes</h3>
 
           {linkedNotes.map((note) => (
             <div key={note.id} className="p-3 rounded-lg group" style={{ backgroundColor: 'var(--bg-raised)' }}>
@@ -337,14 +269,15 @@ export function TaskDetail() {
                   <span className="text-sm" style={{ color: 'var(--accent)' }}>
                     {note.content.split('\n')[0].substring(0, 80) || 'Untitled Note'}
                   </span>
-                  {note.content.length > 80 && (
-                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>...</span>
+                  {note.content.split('\n')[0].length > 80 && (
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>…</span>
                   )}
                 </div>
                 <button
                   onClick={() => handleUnlinkNote(note.id)}
                   className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                   style={{ color: 'var(--text-muted)' }}
+                  title="Unlink note"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -6,8 +6,11 @@ interface AppContextType {
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
   navigateToNote: (noteId: string) => void;
+  navigateToTask: (taskId: string) => void;
   pendingNoteId: string | null;
+  pendingTaskId: string | null;
   clearPendingNote: () => void;
+  clearPendingTask: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -15,14 +18,24 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<AppTab>('tasks');
   const [pendingNoteId, setPendingNoteId] = useState<string | null>(null);
+  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
 
   const navigateToNote = useCallback((noteId: string) => {
     setPendingNoteId(noteId);
     setActiveTab('scratchpad');
   }, []);
 
+  const navigateToTask = useCallback((taskId: string) => {
+    setPendingTaskId(taskId);
+    setActiveTab('tasks');
+  }, []);
+
   const clearPendingNote = useCallback(() => {
     setPendingNoteId(null);
+  }, []);
+
+  const clearPendingTask = useCallback(() => {
+    setPendingTaskId(null);
   }, []);
 
   return (
@@ -31,8 +44,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         activeTab,
         setActiveTab,
         navigateToNote,
+        navigateToTask,
         pendingNoteId,
+        pendingTaskId,
         clearPendingNote,
+        clearPendingTask,
       }}
     >
       {children}
