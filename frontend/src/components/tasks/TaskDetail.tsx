@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTasks } from '../../context/TaskContext';
-import { TaskStatus } from '../../types';
+import { useNotes } from '../../context/NoteContext';
+import { useApp } from '../../context/AppContext';
+import { TaskStatus, Note } from '../../types';
 import { TaskSteps } from './TaskSteps';
 import { TaskResearch } from './TaskResearch';
 import { StatusHistory } from './StatusHistory';
@@ -23,7 +25,10 @@ export function TaskDetail() {
     completeTask,
     reactivateTask,
     selectTask,
+    unlinkNote,
   } = useTasks();
+  const { notes } = useNotes();
+  const { navigateToNote } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -72,6 +77,15 @@ export function TaskDetail() {
       await updateTaskStatus(selectedTask.id, status);
     }
   };
+
+  const handleUnlinkNote = async (noteId: string) => {
+    await unlinkNote(selectedTask.id, noteId);
+  };
+
+  // Get linked note objects from the notes array
+  const linkedNotes: Note[] = (selectedTask.linked_note_ids || [])
+    .map(id => notes.find(n => n.id === id))
+    .filter((n): n is Note => n !== undefined);
 
   const inputStyle = {
     backgroundColor: 'var(--bg-raised)',
@@ -240,6 +254,45 @@ export function TaskDetail() {
 
         {/* Research */}
         <TaskResearch taskId={selectedTask.id} research={selectedTask.research} />
+
+        {/* Linked Notes */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Linked Notes</h3>
+
+          {linkedNotes.map((note) => (
+            <div key={note.id} className="p-3 rounded-lg group" style={{ backgroundColor: 'var(--bg-raised)' }}>
+              <div className="flex items-start justify-between">
+                <div
+                  className="cursor-pointer flex-1 min-w-0"
+                  onClick={() => navigateToNote(note.id)}
+                >
+                  <span className="text-sm" style={{ color: 'var(--accent)' }}>
+                    {note.content.split('\n')[0].substring(0, 80) || 'Untitled Note'}
+                  </span>
+                  {note.content.split('\n')[0].length > 80 && (
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>…</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleUnlinkNote(note.id)}
+                  className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: 'var(--text-muted)' }}
+                  title="Unlink note"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {linkedNotes.length === 0 && (
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              No linked notes
+            </div>
+          )}
+        </div>
 
         {/* Status History */}
         <div>

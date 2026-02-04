@@ -64,5 +64,8 @@ class Task(Document):
     next_steps: List[Step] = Field(default_factory=list)
     research: List[ResearchReference] = Field(default_factory=list)
 
+    # Linked notes
+    linked_note_ids: List[PydanticObjectId] = Field(default_factory=list)
+
     class Settings:
         name = "tasks"

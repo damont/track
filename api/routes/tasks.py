@@ -6,6 +6,7 @@ from beanie import PydanticObjectId
 
 from api.schemas.orm.user import User
 from api.schemas.orm.task import Task, TaskStatus, StatusEntry, Step, ResearchReference
+from api.schemas.orm.note import Note
 from api.schemas.dto.task import (
     TaskCreate,
     TaskUpdate,
@@ -41,6 +42,7 @@ def task_to_response(task: Task) -> TaskResponse:
         notes=task.notes,
         next_steps=task.next_steps,
         research=task.research,
+        linked_note_ids=[str(nid) for nid in task.linked_note_ids],
     )
 
 
@@ -60,6 +62,7 @@ def task_to_list_response(task: Task) -> TaskListResponse:
         step_count=len(task.next_steps),
         completed_step_count=completed_steps,
         next_step_description=next_step.description if next_step else None,
+        linked_note_ids=[str(nid) for nid in task.linked_note_ids],
     )
 
 
@@ -345,6 +348,61 @@ async def reorder_task(
     # Check if rebalancing is needed
     if should_rebalance(before_order, after_order, new_order):
         await rebalance_orders(current_user.id, data.order_type, task.category_id)
+
+    return task_to_response(task)
+
+
+# --- Linked Notes ---
+
+@router.post("/{task_id}/notes/{note_id}", response_model=TaskResponse)
+async def link_note(
+    task_id: str,
+    note_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        task = await Task.get(PydanticObjectId(task_id))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    if task is None or task.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    try:
+        note = await Note.get(PydanticObjectId(note_id))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+
+    if note is None or note.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+
+    note_oid = PydanticObjectId(note_id)
+    if note_oid not in task.linked_note_ids:
+        task.linked_note_ids.append(note_oid)
+        task.updated_at = datetime.utcnow()
+        await task.save()
+
+    return task_to_response(task)
+
+
+@router.delete("/{task_id}/notes/{note_id}", response_model=TaskResponse)
+async def unlink_note(
+    task_id: str,
+    note_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        task = await Task.get(PydanticObjectId(task_id))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    if task is None or task.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    note_oid = PydanticObjectId(note_id)
+    task.linked_note_ids = [nid for nid in task.linked_note_ids if nid != note_oid]
+    task.updated_at = datetime.utcnow()
+    await task.save()
 
     return task_to_response(task)
 

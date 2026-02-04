@@ -39,6 +39,7 @@ export interface Task {
   notes: string | null;
   next_steps: Step[];
   research: ResearchReference[];
+  linked_note_ids: string[];
 }
 
 export interface TaskListItem {
@@ -53,6 +54,7 @@ export interface TaskListItem {
   step_count: number;
   completed_step_count: number;
   next_step_description: string | null;
+  linked_note_ids: string[];
 }
 
 export interface Category {
@@ -60,6 +62,17 @@ export interface Category {
   name: string;
   color: string | null;
   order: number;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  pinned: boolean;
+  order: number;
+  tags: string[];
+  category_id: string | null;
 }
 
 export interface User {

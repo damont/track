@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { api } from '../api/client';
 import { Task, TaskListItem, Category, TaskStatus } from '../types';
 import { useAuth } from './AuthContext';
+import { useApp } from './AppContext';
 
 interface TaskContextType {
   tasks: TaskListItem[];
@@ -30,6 +31,8 @@ interface TaskContextType {
   addResearch: (taskId: string, data: { title: string; url?: string; notes?: string }) => Promise<Task>;
   updateResearch: (taskId: string, refId: string, data: { title?: string; url?: string; notes?: string }) => Promise<Task>;
   deleteResearch: (taskId: string, refId: string) => Promise<Task>;
+  linkNote: (taskId: string, noteId: string) => Promise<Task>;
+  unlinkNote: (taskId: string, noteId: string) => Promise<Task>;
   createCategory: (data: { name: string; color?: string }) => Promise<Category>;
   updateCategory: (categoryId: string, data: { name?: string; color?: string }) => Promise<Category>;
   deleteCategory: (categoryId: string) => Promise<void>;
@@ -39,6 +42,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
+  const { pendingTaskId, clearPendingTask } = useApp();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -87,14 +91,22 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setFilterState(prev => ({ ...prev, ...newFilter }));
   };
 
-  const selectTask = async (taskId: string | null) => {
+  const selectTask = useCallback(async (taskId: string | null) => {
     if (!taskId) {
       setSelectedTask(null);
       return;
     }
     const task = await api.get<Task>(`/api/tasks/${taskId}`);
     setSelectedTask(task);
-  };
+  }, []);
+
+  // Handle navigation from other parts of the app (e.g. note linked tasks)
+  useEffect(() => {
+    if (pendingTaskId) {
+      selectTask(pendingTaskId);
+      clearPendingTask();
+    }
+  }, [pendingTaskId, selectTask, clearPendingTask]);
 
   const createTask = async (data: { name: string; description?: string; category_id?: string; notes?: string }) => {
     const task = await api.post<Task>('/api/tasks', data);
@@ -166,6 +178,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (selectedTask?.id === taskId) {
       setSelectedTask(task);
     }
+    await fetchTasks();
     return task;
   };
 
@@ -174,6 +187,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (selectedTask?.id === taskId) {
       setSelectedTask(task);
     }
+    await fetchTasks();
     return task;
   };
 
@@ -182,6 +196,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (selectedTask?.id === taskId) {
       setSelectedTask(task);
     }
+    await fetchTasks();
     return task;
   };
 
@@ -203,6 +218,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const deleteResearch = async (taskId: string, refId: string) => {
     const task = await api.delete<Task>(`/api/tasks/${taskId}/research/${refId}`);
+    if (selectedTask?.id === taskId) {
+      setSelectedTask(task);
+    }
+    return task;
+  };
+
+  const linkNote = async (taskId: string, noteId: string) => {
+    const task = await api.post<Task>(`/api/tasks/${taskId}/notes/${noteId}`);
+    await fetchTasks();
+    if (selectedTask?.id === taskId) {
+      setSelectedTask(task);
+    }
+    return task;
+  };
+
+  const unlinkNote = async (taskId: string, noteId: string) => {
+    const task = await api.delete<Task>(`/api/tasks/${taskId}/notes/${noteId}`);
+    await fetchTasks();
     if (selectedTask?.id === taskId) {
       setSelectedTask(task);
     }
@@ -251,6 +284,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addResearch,
         updateResearch,
         deleteResearch,
+        linkNote,
+        unlinkNote,
         createCategory,
         updateCategory,
         deleteCategory,

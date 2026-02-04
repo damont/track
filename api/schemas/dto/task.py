@@ -69,6 +69,7 @@ class TaskResponse(BaseModel):
     notes: Optional[str]
     next_steps: List[Step]
     research: List[ResearchReference]
+    linked_note_ids: List[str] = []
 
 
 class TaskListResponse(BaseModel):
@@ -83,3 +84,4 @@ class TaskListResponse(BaseModel):
     step_count: int
     completed_step_count: int
     next_step_description: Optional[str] = None
+    linked_note_ids: List[str] = []
