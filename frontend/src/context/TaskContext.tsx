@@ -166,6 +166,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (selectedTask?.id === taskId) {
       setSelectedTask(task);
     }
+    await fetchTasks();
     return task;
   };
 
@@ -174,6 +175,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (selectedTask?.id === taskId) {
       setSelectedTask(task);
     }
+    await fetchTasks();
     return task;
   };
 
@@ -182,6 +184,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (selectedTask?.id === taskId) {
       setSelectedTask(task);
     }
+    await fetchTasks();
     return task;
   };
 
