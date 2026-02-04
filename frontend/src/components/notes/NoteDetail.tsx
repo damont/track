@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNotes } from '../../context/NoteContext';
+import { useTasks } from '../../context/TaskContext';
 import { api } from '../../api/client';
 import { Task, TaskListItem } from '../../types';
 
@@ -21,6 +22,7 @@ export function NoteDetail() {
     deleteNote,
     selectNote,
   } = useNotes();
+  const { fetchTasks } = useTasks();
 
   const [editContent, setEditContent] = useState('');
   const [showToolbar, setShowToolbar] = useState(false);
@@ -80,6 +82,7 @@ export function NoteDetail() {
   // Handle text selection in textarea
   // Note: window.getSelection() doesn't work with textareas —
   // must use selectionStart/selectionEnd instead.
+  // Uses fixed positioning so the toolbar never clips under the sidebar.
   const handleTextareaMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -89,14 +92,14 @@ export function NoteDetail() {
     if (start !== end) {
       const text = textarea.value.substring(start, end).trim();
       if (text) {
-        // Position toolbar near the mouse cursor
-        const containerRect = textarea.parentElement?.getBoundingClientRect();
-        if (containerRect) {
-          setToolbarPos({
-            top: e.clientY - containerRect.top - 50,
-            left: e.clientX - containerRect.left,
-          });
-        }
+        // Use viewport coordinates (fixed positioning)
+        // Clamp so toolbar stays fully visible
+        const toolbarWidth = 280;
+        const toolbarHeight = 40;
+        const left = Math.max(toolbarWidth / 2, Math.min(e.clientX, window.innerWidth - toolbarWidth / 2));
+        const top = Math.max(toolbarHeight + 8, e.clientY - 50);
+
+        setToolbarPos({ top, left });
         setSelectedText(text);
         setShowToolbar(true);
         return;
@@ -115,6 +118,7 @@ export function NoteDetail() {
     if (!selectedText) return;
     try {
       await api.post<Task>('/api/tasks', { name: selectedText });
+      await fetchTasks();
       showToast('Task created!');
       setShowToolbar(false);
       setShowTaskPicker(false);
@@ -137,6 +141,7 @@ export function NoteDetail() {
     if (!selectedText) return;
     try {
       await api.post<Task>(`/api/tasks/${taskId}/steps`, { description: selectedText });
+      await fetchTasks();
       showToast(`Step added to ${taskName}`);
       setShowToolbar(false);
       setShowTaskPicker(false);
@@ -272,11 +277,11 @@ export function NoteDetail() {
               placeholder="Write your thoughts..."
             />
 
-            {/* Selection toolbar */}
+            {/* Selection toolbar — fixed so it floats above everything */}
             {showToolbar && (
               <div
                 ref={toolbarRef}
-                className="absolute z-50"
+                className="fixed z-50"
                 style={{
                   top: `${toolbarPos.top}px`,
                   left: `${toolbarPos.left}px`,
