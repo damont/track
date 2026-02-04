@@ -53,7 +53,7 @@ export function TaskList() {
         // Moving up
         reorderTask(
           active.id as string,
-          filter.categoryId ? 'category' : 'overall',
+          'overall',
           beforeTaskId,
           afterTaskId
         );
@@ -61,7 +61,7 @@ export function TaskList() {
         // Moving down
         reorderTask(
           active.id as string,
-          filter.categoryId ? 'category' : 'overall',
+          'overall',
           afterTaskId,
           tasks[overIndex + 1]?.id
         );
