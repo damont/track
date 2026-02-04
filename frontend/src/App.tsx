@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AppProvider, useApp } from './context/AppContext';
 import { TaskProvider } from './context/TaskContext';
 import { NoteProvider } from './context/NoteContext';
 import { AuthPage } from './components/auth/AuthPage';
@@ -9,11 +9,9 @@ import { TaskDetail } from './components/tasks/TaskDetail';
 import { NoteList } from './components/notes/NoteList';
 import { NoteDetail } from './components/notes/NoteDetail';
 
-export type AppTab = 'tasks' | 'scratchpad';
-
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<AppTab>('tasks');
+  const { activeTab } = useApp();
 
   if (isLoading) {
     return (
@@ -33,11 +31,7 @@ function AppContent() {
   return (
     <TaskProvider>
       <NoteProvider>
-        <AppLayout
-          sidebar={sidebar}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        >
+        <AppLayout sidebar={sidebar}>
           {main}
         </AppLayout>
       </NoteProvider>
@@ -48,7 +42,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
     </AuthProvider>
   );
 }

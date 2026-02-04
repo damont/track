@@ -1,16 +1,15 @@
 import { ReactNode } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { AppTab } from '../../App';
+import { useApp, AppTab } from '../../context/AppContext';
 
 interface AppLayoutProps {
   sidebar: ReactNode;
   children: ReactNode;
-  activeTab: AppTab;
-  onTabChange: (tab: AppTab) => void;
 }
 
-export function AppLayout({ sidebar, children, activeTab, onTabChange }: AppLayoutProps) {
+export function AppLayout({ sidebar, children }: AppLayoutProps) {
   const { user, logout } = useAuth();
+  const { activeTab, setActiveTab } = useApp();
 
   const tabStyle = (tab: AppTab) => ({
     backgroundColor: activeTab === tab ? 'var(--selected-bg)' : 'transparent',
@@ -35,14 +34,14 @@ export function AppLayout({ sidebar, children, activeTab, onTabChange }: AppLayo
             {/* Tab switcher */}
             <div className="flex items-center gap-1 ml-4">
               <button
-                onClick={() => onTabChange('tasks')}
+                onClick={() => setActiveTab('tasks')}
                 className="px-4 py-1.5 text-sm font-medium rounded-t"
                 style={tabStyle('tasks')}
               >
                 Tasks
               </button>
               <button
-                onClick={() => onTabChange('scratchpad')}
+                onClick={() => setActiveTab('scratchpad')}
                 className="px-4 py-1.5 text-sm font-medium rounded-t"
                 style={tabStyle('scratchpad')}
               >

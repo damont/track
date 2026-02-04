@@ -6,6 +6,7 @@ from beanie import PydanticObjectId
 
 from api.schemas.orm.user import User
 from api.schemas.orm.note import Note
+from api.schemas.orm.task import Task
 from api.schemas.dto.note import NoteCreate, NoteUpdate, NoteResponse
 from api.utils.auth import get_current_user
 
@@ -119,6 +120,11 @@ async def delete_note(
 
     if note is None or note.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+
+    # Remove this note from any tasks that have it linked
+    await Task.find({"linked_note_ids": PydanticObjectId(note_id)}).update_many(
+        {"$pull": {"linked_note_ids": PydanticObjectId(note_id)}}
+    )
 
     await note.delete()
     return None

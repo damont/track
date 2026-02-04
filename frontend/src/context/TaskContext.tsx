@@ -30,6 +30,8 @@ interface TaskContextType {
   addResearch: (taskId: string, data: { title: string; url?: string; notes?: string }) => Promise<Task>;
   updateResearch: (taskId: string, refId: string, data: { title?: string; url?: string; notes?: string }) => Promise<Task>;
   deleteResearch: (taskId: string, refId: string) => Promise<Task>;
+  linkNote: (taskId: string, noteId: string) => Promise<Task>;
+  unlinkNote: (taskId: string, noteId: string) => Promise<Task>;
   createCategory: (data: { name: string; color?: string }) => Promise<Category>;
   updateCategory: (categoryId: string, data: { name?: string; color?: string }) => Promise<Category>;
   deleteCategory: (categoryId: string) => Promise<void>;
@@ -212,6 +214,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return task;
   };
 
+  const linkNote = async (taskId: string, noteId: string) => {
+    const task = await api.post<Task>(`/api/tasks/${taskId}/notes/${noteId}`);
+    await fetchTasks();
+    if (selectedTask?.id === taskId) {
+      setSelectedTask(task);
+    }
+    return task;
+  };
+
+  const unlinkNote = async (taskId: string, noteId: string) => {
+    const task = await api.delete<Task>(`/api/tasks/${taskId}/notes/${noteId}`);
+    await fetchTasks();
+    if (selectedTask?.id === taskId) {
+      setSelectedTask(task);
+    }
+    return task;
+  };
+
   const createCategory = async (data: { name: string; color?: string }) => {
     const category = await api.post<Category>('/api/categories', data);
     await fetchCategories();
@@ -254,6 +274,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addResearch,
         updateResearch,
         deleteResearch,
+        linkNote,
+        unlinkNote,
         createCategory,
         updateCategory,
         deleteCategory,

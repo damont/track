@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { api } from '../api/client';
 import { Note, Category } from '../types';
 import { useAuth } from './AuthContext';
+import { useApp } from './AppContext';
 
 interface NoteFilter {
   categoryId: string | null;
@@ -27,6 +28,7 @@ const NoteContext = createContext<NoteContextType | undefined>(undefined);
 
 export function NoteProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
+  const { pendingNoteId, clearPendingNote } = useApp();
   const [notes, setNotes] = useState<Note[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -67,7 +69,7 @@ export function NoteProvider({ children }: { children: ReactNode }) {
     setFilterState(prev => ({ ...prev, ...newFilter }));
   };
 
-  const selectNote = (noteId: string | null) => {
+  const selectNote = useCallback((noteId: string | null) => {
     if (!noteId) {
       setSelectedNote(null);
       return;
@@ -76,7 +78,15 @@ export function NoteProvider({ children }: { children: ReactNode }) {
     if (note) {
       setSelectedNote(note);
     }
-  };
+  }, [notes]);
+
+  // Handle navigation from other parts of the app (e.g. task linked notes)
+  useEffect(() => {
+    if (pendingNoteId) {
+      selectNote(pendingNoteId);
+      clearPendingNote();
+    }
+  }, [pendingNoteId, selectNote, clearPendingNote]);
 
   const createNote = async (content: string, categoryId?: string) => {
     const note = await api.post<Note>('/api/notes', {
