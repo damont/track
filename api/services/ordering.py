@@ -40,7 +40,7 @@ def should_rebalance(
 async def rebalance_orders(
     user_id: PydanticObjectId,
     order_type: str,
-    category_id: Optional[PydanticObjectId] = None,
+    project_id: Optional[PydanticObjectId] = None,
 ) -> None:
     """Rebalance all order values with even spacing.
 
@@ -52,13 +52,13 @@ async def rebalance_orders(
             task.overall_order = (i + 1) * 1000.0
             await task.save()
     else:
-        # Category order
-        if category_id is None:
+        # Project order
+        if project_id is None:
             return
         tasks = await Task.find(
             Task.user_id == user_id,
-            Task.category_id == category_id
-        ).sort(+Task.category_order).to_list()
+            Task.project_id == project_id
+        ).sort(+Task.project_order).to_list()
         for i, task in enumerate(tasks):
-            task.category_order = (i + 1) * 1000.0
+            task.project_order = (i + 1) * 1000.0
             await task.save()

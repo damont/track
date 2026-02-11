@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class NoteCreate(BaseModel):
     content: str
-    category_id: Optional[str] = None
+    project_id: Optional[str] = None
 
 
 class NoteUpdate(BaseModel):
@@ -13,7 +13,7 @@ class NoteUpdate(BaseModel):
     pinned: Optional[bool] = None
     order: Optional[float] = None
     tags: Optional[List[str]] = None
-    category_id: Optional[str] = None
+    project_id: Optional[str] = None
 
 
 class NoteResponse(BaseModel):
@@ -24,4 +24,4 @@ class NoteResponse(BaseModel):
     pinned: bool
     order: float
     tags: List[str]
-    category_id: Optional[str]
+    project_id: Optional[str]

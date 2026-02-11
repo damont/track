@@ -33,9 +33,9 @@ export interface Task {
   completed_at: string | null;
   current_status: StatusEntry;
   status_history: StatusEntry[];
-  category_id: string | null;
+  project_id: string | null;
   overall_order: number;
-  category_order: number;
+  project_order: number;
   notes: string | null;
   next_steps: Step[];
   research: ResearchReference[];
@@ -47,9 +47,9 @@ export interface TaskListItem {
   name: string;
   description: string | null;
   current_status: StatusEntry;
-  category_id: string | null;
+  project_id: string | null;
   overall_order: number;
-  category_order: number;
+  project_order: number;
   completed_at: string | null;
   step_count: number;
   completed_step_count: number;
@@ -57,7 +57,7 @@ export interface TaskListItem {
   linked_note_ids: string[];
 }
 
-export interface Category {
+export interface Project {
   id: string;
   name: string;
   color: string | null;
@@ -72,7 +72,7 @@ export interface Note {
   pinned: boolean;
   order: number;
   tags: string[];
-  category_id: string | null;
+  project_id: string | null;
 }
 
 export interface User {

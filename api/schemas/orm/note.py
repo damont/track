@@ -13,7 +13,7 @@ class Note(Document):
     pinned: bool = False
     order: float = 0.0
     tags: List[str] = Field(default_factory=list)
-    category_id: Optional[PydanticObjectId] = None
+    project_id: Optional[PydanticObjectId] = None
 
     class Settings:
         name = "notes"

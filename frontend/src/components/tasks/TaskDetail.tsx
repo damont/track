@@ -18,7 +18,7 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
 export function TaskDetail() {
   const {
     selectedTask,
-    categories,
+    projects,
     updateTask,
     deleteTask,
     updateTaskStatus,
@@ -158,7 +158,7 @@ export function TaskDetail() {
           </div>
         </div>
 
-        {/* Status and Category */}
+        {/* Status and Project */}
         <div className="flex flex-wrap gap-4">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -180,18 +180,18 @@ export function TaskDetail() {
 
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-              Category
+              Project
             </label>
             <select
-              value={selectedTask.category_id || ''}
-              onChange={(e) => updateTask(selectedTask.id, { category_id: e.target.value })}
+              value={selectedTask.project_id || ''}
+              onChange={(e) => updateTask(selectedTask.id, { project_id: e.target.value })}
               className="px-3 py-2 rounded text-sm focus:outline-none"
               style={inputStyle}
             >
-              <option value="">No category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
+              <option value="">No project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
                 </option>
               ))}
             </select>

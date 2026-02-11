@@ -1,30 +1,30 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { api } from '../api/client';
-import { Task, TaskListItem, Category, TaskStatus } from '../types';
+import { Task, TaskListItem, Project, TaskStatus } from '../types';
 import { useAuth } from './AuthContext';
 import { useApp } from './AppContext';
 
 interface TaskContextType {
   tasks: TaskListItem[];
-  categories: Category[];
+  projects: Project[];
   selectedTask: Task | null;
   isLoading: boolean;
   filter: {
     active: boolean | null;
-    categoryId: string | null;
+    projectId: string | null;
     status: TaskStatus | null;
   };
   setFilter: (filter: Partial<TaskContextType['filter']>) => void;
   fetchTasks: () => Promise<void>;
-  fetchCategories: () => Promise<void>;
+  fetchProjects: () => Promise<void>;
   selectTask: (taskId: string | null) => Promise<void>;
-  createTask: (data: { name: string; description?: string; category_id?: string; notes?: string }) => Promise<Task>;
-  updateTask: (taskId: string, data: { name?: string; description?: string; category_id?: string; notes?: string }) => Promise<Task>;
+  createTask: (data: { name: string; description?: string; project_id?: string; notes?: string }) => Promise<Task>;
+  updateTask: (taskId: string, data: { name?: string; description?: string; project_id?: string; notes?: string }) => Promise<Task>;
   deleteTask: (taskId: string) => Promise<void>;
   completeTask: (taskId: string) => Promise<Task>;
   reactivateTask: (taskId: string) => Promise<Task>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<Task>;
-  reorderTask: (taskId: string, orderType: 'overall' | 'category', beforeTaskId?: string, afterTaskId?: string) => Promise<void>;
+  reorderTask: (taskId: string, orderType: 'overall' | 'project', beforeTaskId?: string, afterTaskId?: string) => Promise<void>;
   addStep: (taskId: string, description: string) => Promise<Task>;
   updateStep: (taskId: string, stepId: string, data: { description?: string; completed?: boolean }) => Promise<Task>;
   deleteStep: (taskId: string, stepId: string) => Promise<Task>;
@@ -33,38 +33,42 @@ interface TaskContextType {
   deleteResearch: (taskId: string, refId: string) => Promise<Task>;
   linkNote: (taskId: string, noteId: string) => Promise<Task>;
   unlinkNote: (taskId: string, noteId: string) => Promise<Task>;
-  createCategory: (data: { name: string; color?: string }) => Promise<Category>;
-  updateCategory: (categoryId: string, data: { name?: string; color?: string }) => Promise<Category>;
-  deleteCategory: (categoryId: string) => Promise<void>;
+  createProject: (data: { name: string; color?: string }) => Promise<Project>;
+  updateProject: (projectId: string, data: { name?: string; color?: string }) => Promise<Project>;
+  deleteProject: (projectId: string) => Promise<void>;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const { pendingTaskId, clearPendingTask } = useApp();
+  const { pendingTaskId, clearPendingTask, selectedProjectId, setSelectedProjectId } = useApp();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [filter, setFilterState] = useState<TaskContextType['filter']>({
+  const [localFilter, setLocalFilter] = useState<Omit<TaskContextType['filter'], 'projectId'>>({
     active: true,
-    categoryId: null,
     status: null,
   });
+
+  const filter: TaskContextType['filter'] = {
+    ...localFilter,
+    projectId: selectedProjectId,
+  };
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filter.active !== null) {
-        params.set('active', String(filter.active));
+      if (localFilter.active !== null) {
+        params.set('active', String(localFilter.active));
       }
-      if (filter.categoryId) {
-        params.set('category_id', filter.categoryId);
+      if (selectedProjectId) {
+        params.set('project_id', selectedProjectId);
       }
-      if (filter.status) {
-        params.set('status', filter.status);
+      if (localFilter.status) {
+        params.set('status', localFilter.status);
       }
       const queryString = params.toString();
       const endpoint = `/api/tasks${queryString ? `?${queryString}` : ''}`;
@@ -73,22 +77,28 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [filter]);
+  }, [localFilter, selectedProjectId]);
 
-  const fetchCategories = useCallback(async () => {
-    const data = await api.get<Category[]>('/api/categories');
-    setCategories(data);
+  const fetchProjects = useCallback(async () => {
+    const data = await api.get<Project[]>('/api/projects');
+    setProjects(data);
   }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchTasks();
-      fetchCategories();
+      fetchProjects();
     }
-  }, [isAuthenticated, fetchTasks, fetchCategories]);
+  }, [isAuthenticated, fetchTasks, fetchProjects]);
 
   const setFilter = (newFilter: Partial<TaskContextType['filter']>) => {
-    setFilterState(prev => ({ ...prev, ...newFilter }));
+    if ('projectId' in newFilter) {
+      setSelectedProjectId(newFilter.projectId ?? null);
+    }
+    const { projectId, ...rest } = newFilter;
+    if (Object.keys(rest).length > 0) {
+      setLocalFilter(prev => ({ ...prev, ...rest }));
+    }
   };
 
   const selectTask = useCallback(async (taskId: string | null) => {
@@ -108,13 +118,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   }, [pendingTaskId, selectTask, clearPendingTask]);
 
-  const createTask = async (data: { name: string; description?: string; category_id?: string; notes?: string }) => {
+  const createTask = async (data: { name: string; description?: string; project_id?: string; notes?: string }) => {
     const task = await api.post<Task>('/api/tasks', data);
     await fetchTasks();
     return task;
   };
 
-  const updateTask = async (taskId: string, data: { name?: string; description?: string; category_id?: string; notes?: string }) => {
+  const updateTask = async (taskId: string, data: { name?: string; description?: string; project_id?: string; notes?: string }) => {
     const task = await api.put<Task>(`/api/tasks/${taskId}`, data);
     await fetchTasks();
     if (selectedTask?.id === taskId) {
@@ -160,7 +170,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const reorderTask = async (
     taskId: string,
-    orderType: 'overall' | 'category',
+    orderType: 'overall' | 'project',
     beforeTaskId?: string,
     afterTaskId?: string
   ) => {
@@ -242,34 +252,34 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return task;
   };
 
-  const createCategory = async (data: { name: string; color?: string }) => {
-    const category = await api.post<Category>('/api/categories', data);
-    await fetchCategories();
-    return category;
+  const createProject = async (data: { name: string; color?: string }) => {
+    const project = await api.post<Project>('/api/projects', data);
+    await fetchProjects();
+    return project;
   };
 
-  const updateCategory = async (categoryId: string, data: { name?: string; color?: string }) => {
-    const category = await api.put<Category>(`/api/categories/${categoryId}`, data);
-    await fetchCategories();
-    return category;
+  const updateProject = async (projectId: string, data: { name?: string; color?: string }) => {
+    const project = await api.put<Project>(`/api/projects/${projectId}`, data);
+    await fetchProjects();
+    return project;
   };
 
-  const deleteCategory = async (categoryId: string) => {
-    await api.delete(`/api/categories/${categoryId}`);
-    await fetchCategories();
+  const deleteProject = async (projectId: string) => {
+    await api.delete(`/api/projects/${projectId}`);
+    await fetchProjects();
   };
 
   return (
     <TaskContext.Provider
       value={{
         tasks,
-        categories,
+        projects,
         selectedTask,
         isLoading,
         filter,
         setFilter,
         fetchTasks,
-        fetchCategories,
+        fetchProjects,
         selectTask,
         createTask,
         updateTask,
@@ -286,9 +296,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         deleteResearch,
         linkNote,
         unlinkNote,
-        createCategory,
-        updateCategory,
-        deleteCategory,
+        createProject,
+        updateProject,
+        deleteProject,
       }}
     >
       {children}

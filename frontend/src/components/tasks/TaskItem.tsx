@@ -26,8 +26,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export function TaskItem({ task, isSelected, onSelect }: TaskItemProps) {
-  const { categories } = useTasks();
-  const category = categories.find(c => c.id === task.category_id);
+  const { projects } = useTasks();
+  const project = projects.find(p => p.id === task.project_id);
 
   const {
     attributes,
@@ -103,15 +103,15 @@ export function TaskItem({ task, isSelected, onSelect }: TaskItemProps) {
               {statusLabels[task.current_status.status]}
             </span>
 
-            {category && (
+            {project && (
               <span
                 className="text-xs px-2 py-0.5 rounded-full"
                 style={{
-                  backgroundColor: category.color ? `${category.color}30` : 'var(--bg-raised)',
-                  color: category.color || 'var(--text-secondary)',
+                  backgroundColor: project.color ? `${project.color}30` : 'var(--bg-raised)',
+                  color: project.color || 'var(--text-secondary)',
                 }}
               >
-                {category.name}
+                {project.name}
               </span>
             )}
 

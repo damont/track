@@ -8,14 +8,14 @@ from api.schemas.orm.task import TaskStatus, Step, ResearchReference, StatusEntr
 class TaskCreate(BaseModel):
     name: str
     description: Optional[str] = None
-    category_id: Optional[str] = None
+    project_id: Optional[str] = None
     notes: Optional[str] = None
 
 
 class TaskUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    category_id: Optional[str] = None
+    project_id: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -25,7 +25,7 @@ class TaskStatusUpdate(BaseModel):
 
 class TaskReorder(BaseModel):
     task_id: str
-    order_type: str  # "overall" or "category"
+    order_type: str  # "overall" or "project"
     before_task_id: Optional[str] = None  # Task to place after
     after_task_id: Optional[str] = None   # Task to place before
 
@@ -63,9 +63,9 @@ class TaskResponse(BaseModel):
     completed_at: Optional[datetime]
     current_status: StatusEntry
     status_history: List[StatusEntry]
-    category_id: Optional[str]
+    project_id: Optional[str]
     overall_order: float
-    category_order: float
+    project_order: float
     notes: Optional[str]
     next_steps: List[Step]
     research: List[ResearchReference]
@@ -77,9 +77,9 @@ class TaskListResponse(BaseModel):
     name: str
     description: Optional[str]
     current_status: StatusEntry
-    category_id: Optional[str]
+    project_id: Optional[str]
     overall_order: float
-    category_order: float
+    project_order: float
     completed_at: Optional[datetime]
     step_count: int
     completed_step_count: int
