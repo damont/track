@@ -1,25 +1,25 @@
 import { useState } from 'react';
 import { useTasks } from '../../context/TaskContext';
 
-export function CategoryFilter() {
-  const { categories, filter, setFilter, createCategory, deleteCategory } = useTasks();
-  const [showNewCategory, setShowNewCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#6c8aec');
+export function ProjectFilter() {
+  const { projects, filter, setFilter, createProject, deleteProject } = useTasks();
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectColor, setNewProjectColor] = useState('#6c8aec');
 
-  const handleCreateCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    await createCategory({ name: newCategoryName, color: newCategoryColor });
-    setNewCategoryName('');
-    setShowNewCategory(false);
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return;
+    await createProject({ name: newProjectName, color: newProjectColor });
+    setNewProjectName('');
+    setShowNewProject(false);
   };
 
   return (
     <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
       <div className="flex items-center gap-2">
         <select
-          value={filter.categoryId || ''}
-          onChange={(e) => setFilter({ categoryId: e.target.value || null })}
+          value={filter.projectId || ''}
+          onChange={(e) => setFilter({ projectId: e.target.value || null })}
           className="flex-1 px-3 py-1.5 rounded text-sm focus:outline-none"
           style={{
             backgroundColor: 'var(--bg-raised)',
@@ -28,37 +28,37 @@ export function CategoryFilter() {
           }}
         >
           <option value="">All Tasks</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
             </option>
           ))}
         </select>
 
         <button
-          onClick={() => setShowNewCategory(!showNewCategory)}
+          onClick={() => setShowNewProject(!showNewProject)}
           className="px-2 py-1.5 rounded text-sm font-medium whitespace-nowrap"
           style={{
             backgroundColor: 'var(--bg-raised)',
             border: '1px solid var(--border-color)',
             color: 'var(--text-secondary)',
           }}
-          title="Add category"
+          title="Add project"
         >
-          {categories.length === 0 ? '+ Category' : '+'}
+          {projects.length === 0 ? '+ Project' : '+'}
         </button>
 
-        {filter.categoryId && (
+        {filter.projectId && (
           <button
             onClick={() => {
-              if (confirm('Delete this category?')) {
-                deleteCategory(filter.categoryId!);
-                setFilter({ categoryId: null });
+              if (confirm('Delete this project?')) {
+                deleteProject(filter.projectId!);
+                setFilter({ projectId: null });
               }
             }}
             className="px-2 py-1.5 rounded text-sm"
             style={{ color: 'var(--text-muted)' }}
-            title="Delete selected category"
+            title="Delete selected project"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -67,13 +67,13 @@ export function CategoryFilter() {
         )}
       </div>
 
-      {showNewCategory && (
+      {showNewProject && (
         <div className="mt-2 space-y-2">
           <input
             type="text"
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder="Category name"
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            placeholder="Project name"
             className="w-full px-3 py-1.5 rounded text-sm focus:outline-none"
             style={{
               backgroundColor: 'var(--bg-raised)',
@@ -82,26 +82,26 @@ export function CategoryFilter() {
             }}
             autoFocus
             onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreateCategory();
-              if (e.key === 'Escape') setShowNewCategory(false);
+              if (e.key === 'Enter') handleCreateProject();
+              if (e.key === 'Escape') setShowNewProject(false);
             }}
           />
           <div className="flex items-center gap-2">
             <input
               type="color"
-              value={newCategoryColor}
-              onChange={(e) => setNewCategoryColor(e.target.value)}
+              value={newProjectColor}
+              onChange={(e) => setNewProjectColor(e.target.value)}
               className="w-8 h-8 rounded cursor-pointer border-0"
             />
             <button
-              onClick={handleCreateCategory}
+              onClick={handleCreateProject}
               className="flex-1 px-3 py-1 rounded text-sm text-white"
               style={{ backgroundColor: 'var(--accent)' }}
             >
               Add
             </button>
             <button
-              onClick={() => setShowNewCategory(false)}
+              onClick={() => setShowNewProject(false)}
               className="px-3 py-1 text-sm"
               style={{ color: 'var(--text-muted)' }}
             >

@@ -18,7 +18,7 @@ interface ToolbarPosition {
 export function NoteDetail() {
   const {
     selectedNote,
-    categories,
+    projects,
     updateNote,
     deleteNote,
     selectNote,
@@ -115,11 +115,15 @@ export function NoteDetail() {
   };
 
   const handleCreateTask = async () => {
-    if (!selectedText) return;
+    if (!selectedText || !selectedNote) return;
     try {
-      await api.post<Task>('/api/tasks', { name: selectedText });
+      const task = await api.post<Task>('/api/tasks', {
+        name: selectedText,
+        project_id: selectedNote.project_id || undefined,
+      });
+      await linkNote(task.id, selectedNote.id);
       await fetchTasks();
-      showToast('Task created!');
+      showToast('Task created & linked!');
       setShowToolbar(false);
       setShowTaskPicker(false);
     } catch {
@@ -128,8 +132,13 @@ export function NoteDetail() {
   };
 
   const handleShowAddStep = async () => {
+    if (!selectedNote) return;
     try {
-      const tasks = await api.get<TaskListItem[]>('/api/tasks?active=true');
+      const params = new URLSearchParams({ active: 'true' });
+      if (selectedNote.project_id) {
+        params.set('project_id', selectedNote.project_id);
+      }
+      const tasks = await api.get<TaskListItem[]>(`/api/tasks?${params.toString()}`);
       setActiveTasks(tasks);
       setShowTaskPicker(true);
     } catch {
@@ -150,11 +159,15 @@ export function NoteDetail() {
     }
   };
 
-  // "Link to Task" picker
+  // "Link to Task" picker — only show tasks in the same project
   const handleShowLinkTaskPicker = async () => {
     if (!selectedNote) return;
     try {
-      const allTasks = await api.get<TaskListItem[]>('/api/tasks?active=true');
+      const params = new URLSearchParams({ active: 'true' });
+      if (selectedNote.project_id) {
+        params.set('project_id', selectedNote.project_id);
+      }
+      const allTasks = await api.get<TaskListItem[]>(`/api/tasks?${params.toString()}`);
       // Filter out tasks that already link this note
       const available = allTasks.filter(
         t => !(t.linked_note_ids || []).includes(selectedNote.id)
@@ -290,21 +303,21 @@ export function NoteDetail() {
           </div>
         </div>
 
-        {/* Category */}
+        {/* Project */}
         <div>
           <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-            Category
+            Project
           </label>
           <select
-            value={selectedNote.category_id || ''}
-            onChange={(e) => updateNote(selectedNote.id, { category_id: e.target.value })}
+            value={selectedNote.project_id || ''}
+            onChange={(e) => updateNote(selectedNote.id, { project_id: e.target.value })}
             className="px-3 py-2 rounded text-sm focus:outline-none"
             style={inputStyle}
           >
-            <option value="">No category</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
+            <option value="">No project</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
               </option>
             ))}
           </select>

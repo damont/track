@@ -1,48 +1,49 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { api } from '../api/client';
-import { Note, Category } from '../types';
+import { Note, Project } from '../types';
 import { useAuth } from './AuthContext';
 import { useApp } from './AppContext';
 
 interface NoteFilter {
-  categoryId: string | null;
+  projectId: string | null;
 }
 
 interface NoteContextType {
   notes: Note[];
-  categories: Category[];
+  projects: Project[];
   selectedNote: Note | null;
   isLoading: boolean;
   filter: NoteFilter;
   setFilter: (filter: Partial<NoteFilter>) => void;
   fetchNotes: () => Promise<void>;
   selectNote: (noteId: string | null) => void;
-  createNote: (content: string, categoryId?: string) => Promise<Note>;
-  updateNote: (noteId: string, data: { content?: string; pinned?: boolean; order?: number; tags?: string[]; category_id?: string }) => Promise<Note>;
+  createNote: (content: string, projectId?: string) => Promise<Note>;
+  updateNote: (noteId: string, data: { content?: string; pinned?: boolean; order?: number; tags?: string[]; project_id?: string }) => Promise<Note>;
   deleteNote: (noteId: string) => Promise<void>;
-  createCategory: (data: { name: string; color?: string }) => Promise<Category>;
-  deleteCategory: (categoryId: string) => Promise<void>;
+  createProject: (data: { name: string; color?: string }) => Promise<Project>;
+  deleteProject: (projectId: string) => Promise<void>;
 }
 
 const NoteContext = createContext<NoteContextType | undefined>(undefined);
 
 export function NoteProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const { pendingNoteId, clearPendingNote } = useApp();
+  const { pendingNoteId, clearPendingNote, selectedProjectId, setSelectedProjectId } = useApp();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [filter, setFilterState] = useState<NoteFilter>({
-    categoryId: null,
-  });
+
+  const filter: NoteFilter = {
+    projectId: selectedProjectId,
+  };
 
   const fetchNotes = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filter.categoryId) {
-        params.set('category_id', filter.categoryId);
+      if (selectedProjectId) {
+        params.set('project_id', selectedProjectId);
       }
       const queryString = params.toString();
       const endpoint = `/api/notes${queryString ? `?${queryString}` : ''}`;
@@ -51,22 +52,24 @@ export function NoteProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [filter]);
+  }, [selectedProjectId]);
 
-  const fetchCategories = useCallback(async () => {
-    const data = await api.get<Category[]>('/api/categories');
-    setCategories(data);
+  const fetchProjects = useCallback(async () => {
+    const data = await api.get<Project[]>('/api/projects');
+    setProjects(data);
   }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotes();
-      fetchCategories();
+      fetchProjects();
     }
-  }, [isAuthenticated, fetchNotes, fetchCategories]);
+  }, [isAuthenticated, fetchNotes, fetchProjects]);
 
   const setFilter = (newFilter: Partial<NoteFilter>) => {
-    setFilterState(prev => ({ ...prev, ...newFilter }));
+    if ('projectId' in newFilter) {
+      setSelectedProjectId(newFilter.projectId ?? null);
+    }
   };
 
   const selectNote = useCallback((noteId: string | null) => {
@@ -88,17 +91,17 @@ export function NoteProvider({ children }: { children: ReactNode }) {
     }
   }, [pendingNoteId, selectNote, clearPendingNote]);
 
-  const createNote = async (content: string, categoryId?: string) => {
+  const createNote = async (content: string, projectId?: string) => {
     const note = await api.post<Note>('/api/notes', {
       content,
-      category_id: categoryId || undefined,
+      project_id: projectId || undefined,
     });
     await fetchNotes();
     setSelectedNote(note);
     return note;
   };
 
-  const updateNote = async (noteId: string, data: { content?: string; pinned?: boolean; order?: number; tags?: string[]; category_id?: string }) => {
+  const updateNote = async (noteId: string, data: { content?: string; pinned?: boolean; order?: number; tags?: string[]; project_id?: string }) => {
     const note = await api.put<Note>(`/api/notes/${noteId}`, data);
     await fetchNotes();
     if (selectedNote?.id === noteId) {
@@ -115,22 +118,22 @@ export function NoteProvider({ children }: { children: ReactNode }) {
     await fetchNotes();
   };
 
-  const createCategory = async (data: { name: string; color?: string }) => {
-    const category = await api.post<Category>('/api/categories', data);
-    await fetchCategories();
-    return category;
+  const createProject = async (data: { name: string; color?: string }) => {
+    const project = await api.post<Project>('/api/projects', data);
+    await fetchProjects();
+    return project;
   };
 
-  const deleteCategory = async (categoryId: string) => {
-    await api.delete(`/api/categories/${categoryId}`);
-    await fetchCategories();
+  const deleteProject = async (projectId: string) => {
+    await api.delete(`/api/projects/${projectId}`);
+    await fetchProjects();
   };
 
   return (
     <NoteContext.Provider
       value={{
         notes,
-        categories,
+        projects,
         selectedNote,
         isLoading,
         filter,
@@ -140,8 +143,8 @@ export function NoteProvider({ children }: { children: ReactNode }) {
         createNote,
         updateNote,
         deleteNote,
-        createCategory,
-        deleteCategory,
+        createProject,
+        deleteProject,
       }}
     >
       {children}

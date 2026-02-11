@@ -55,9 +55,9 @@ class Task(Document):
     status_history: List[StatusEntry] = Field(default_factory=list)
 
     # Organization
-    category_id: Optional[PydanticObjectId] = None
+    project_id: Optional[PydanticObjectId] = None
     overall_order: float = 0.0  # Fractional indexing for global sort
-    category_order: float = 0.0  # Fractional indexing for category sort
+    project_order: float = 0.0  # Fractional indexing for project sort
 
     # Content
     notes: Optional[str] = None

@@ -4,7 +4,7 @@ import { useNotes } from '../../context/NoteContext';
 export function NoteList() {
   const {
     notes,
-    categories,
+    projects,
     selectedNote,
     selectNote,
     createNote,
@@ -12,19 +12,19 @@ export function NoteList() {
     deleteNote,
     filter,
     setFilter,
-    createCategory,
-    deleteCategory,
+    createProject,
+    deleteProject,
     isLoading,
   } = useNotes();
 
   const [newNoteContent, setNewNoteContent] = useState('');
-  const [showNewCategory, setShowNewCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#6c8aec');
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectColor, setNewProjectColor] = useState('#6c8aec');
 
   const handleCreateNote = async () => {
     if (!newNoteContent.trim()) return;
-    await createNote(newNoteContent, filter.categoryId || undefined);
+    await createNote(newNoteContent, filter.projectId || undefined);
     setNewNoteContent('');
   };
 
@@ -38,11 +38,11 @@ export function NoteList() {
     await deleteNote(noteId);
   };
 
-  const handleCreateCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    await createCategory({ name: newCategoryName, color: newCategoryColor });
-    setNewCategoryName('');
-    setShowNewCategory(false);
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return;
+    await createProject({ name: newProjectName, color: newProjectColor });
+    setNewProjectName('');
+    setShowNewProject(false);
   };
 
   const getPreview = (content: string) => {
@@ -52,12 +52,12 @@ export function NoteList() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Category filter */}
+      {/* Project filter */}
       <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
         <div className="flex items-center gap-2">
           <select
-            value={filter.categoryId || ''}
-            onChange={(e) => setFilter({ categoryId: e.target.value || null })}
+            value={filter.projectId || ''}
+            onChange={(e) => setFilter({ projectId: e.target.value || null })}
             className="flex-1 px-3 py-1.5 rounded text-sm focus:outline-none"
             style={{
               backgroundColor: 'var(--bg-raised)',
@@ -66,37 +66,37 @@ export function NoteList() {
             }}
           >
             <option value="">All Notes</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
               </option>
             ))}
           </select>
 
           <button
-            onClick={() => setShowNewCategory(!showNewCategory)}
+            onClick={() => setShowNewProject(!showNewProject)}
             className="px-2 py-1.5 rounded text-sm font-medium whitespace-nowrap"
             style={{
               backgroundColor: 'var(--bg-raised)',
               border: '1px solid var(--border-color)',
               color: 'var(--text-secondary)',
             }}
-            title="Add category"
+            title="Add project"
           >
-            {categories.length === 0 ? '+ Category' : '+'}
+            {projects.length === 0 ? '+ Project' : '+'}
           </button>
 
-          {filter.categoryId && (
+          {filter.projectId && (
             <button
               onClick={() => {
-                if (confirm('Delete this category?')) {
-                  deleteCategory(filter.categoryId!);
-                  setFilter({ categoryId: null });
+                if (confirm('Delete this project?')) {
+                  deleteProject(filter.projectId!);
+                  setFilter({ projectId: null });
                 }
               }}
               className="px-2 py-1.5 rounded text-sm"
               style={{ color: 'var(--text-muted)' }}
-              title="Delete selected category"
+              title="Delete selected project"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -105,13 +105,13 @@ export function NoteList() {
           )}
         </div>
 
-        {showNewCategory && (
+        {showNewProject && (
           <div className="mt-2 space-y-2">
             <input
               type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Category name"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              placeholder="Project name"
               className="w-full px-3 py-1.5 rounded text-sm focus:outline-none"
               style={{
                 backgroundColor: 'var(--bg-raised)',
@@ -120,26 +120,26 @@ export function NoteList() {
               }}
               autoFocus
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreateCategory();
-                if (e.key === 'Escape') setShowNewCategory(false);
+                if (e.key === 'Enter') handleCreateProject();
+                if (e.key === 'Escape') setShowNewProject(false);
               }}
             />
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={newCategoryColor}
-                onChange={(e) => setNewCategoryColor(e.target.value)}
+                value={newProjectColor}
+                onChange={(e) => setNewProjectColor(e.target.value)}
                 className="w-8 h-8 rounded cursor-pointer border-0"
               />
               <button
-                onClick={handleCreateCategory}
+                onClick={handleCreateProject}
                 className="flex-1 px-3 py-1 rounded text-sm text-white"
                 style={{ backgroundColor: 'var(--accent)' }}
               >
                 Add
               </button>
               <button
-                onClick={() => setShowNewCategory(false)}
+                onClick={() => setShowNewProject(false)}
                 className="px-3 py-1 text-sm"
                 style={{ color: 'var(--text-muted)' }}
               >
@@ -158,7 +158,7 @@ export function NoteList() {
           <div className="p-4 text-center" style={{ color: 'var(--text-muted)' }}>No notes yet</div>
         ) : (
           notes.map((note) => {
-            const category = categories.find(c => c.id === note.category_id);
+            const project = projects.find(p => p.id === note.project_id);
             return (
               <div
                 key={note.id}
@@ -187,15 +187,15 @@ export function NoteList() {
                       <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                         {new Date(note.updated_at).toLocaleDateString()}
                       </span>
-                      {category && (
+                      {project && (
                         <span
                           className="text-xs px-2 py-0.5 rounded-full"
                           style={{
-                            backgroundColor: category.color ? `${category.color}30` : 'var(--bg-raised)',
-                            color: category.color || 'var(--text-secondary)',
+                            backgroundColor: project.color ? `${project.color}30` : 'var(--bg-raised)',
+                            color: project.color || 'var(--text-secondary)',
                           }}
                         >
-                          {category.name}
+                          {project.name}
                         </span>
                       )}
                     </div>

@@ -22,20 +22,20 @@ def note_to_response(note: Note) -> NoteResponse:
         pinned=note.pinned,
         order=note.order,
         tags=note.tags,
-        category_id=str(note.category_id) if note.category_id else None,
+        project_id=str(note.project_id) if note.project_id else None,
     )
 
 
 @router.get("", response_model=List[NoteResponse])
 async def list_notes(
     current_user: User = Depends(get_current_user),
-    category_id: Optional[str] = Query(None, description="Filter by category"),
+    project_id: Optional[str] = Query(None, description="Filter by project"),
 ):
     query = {"user_id": current_user.id}
 
-    if category_id:
+    if project_id:
         try:
-            query["category_id"] = PydanticObjectId(category_id)
+            query["project_id"] = PydanticObjectId(project_id)
         except Exception:
             pass
 
@@ -57,10 +57,10 @@ async def create_note(
     ).sort(-Note.order).first_or_none()
     order = (max_order_note.order + 1000.0) if max_order_note else 1000.0
 
-    category_id = None
-    if data.category_id:
+    project_id = None
+    if data.project_id:
         try:
-            category_id = PydanticObjectId(data.category_id)
+            project_id = PydanticObjectId(data.project_id)
         except Exception:
             pass
 
@@ -68,7 +68,7 @@ async def create_note(
         user_id=current_user.id,
         content=data.content,
         order=order,
-        category_id=category_id,
+        project_id=project_id,
     )
     await note.insert()
     return note_to_response(note)
@@ -90,15 +90,15 @@ async def update_note(
 
     update_data = data.model_dump(exclude_unset=True)
 
-    # Handle category_id conversion
-    if "category_id" in update_data:
-        if update_data["category_id"]:
+    # Handle project_id conversion
+    if "project_id" in update_data:
+        if update_data["project_id"]:
             try:
-                update_data["category_id"] = PydanticObjectId(update_data["category_id"])
+                update_data["project_id"] = PydanticObjectId(update_data["project_id"])
             except Exception:
-                del update_data["category_id"]
+                del update_data["project_id"]
         else:
-            update_data["category_id"] = None
+            update_data["project_id"] = None
 
     if update_data:
         update_data["updated_at"] = datetime.utcnow()

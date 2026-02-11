@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useTasks } from '../../context/TaskContext';
 import { TaskItem } from './TaskItem';
-import { CategoryFilter } from '../categories/CategoryFilter';
+import { ProjectFilter } from '../projects/ProjectFilter';
 
 export function TaskList() {
   const {
@@ -53,7 +53,7 @@ export function TaskList() {
         // Moving up
         reorderTask(
           active.id as string,
-          filter.categoryId ? 'category' : 'overall',
+          filter.projectId ? 'project' : 'overall',
           beforeTaskId,
           afterTaskId
         );
@@ -61,7 +61,7 @@ export function TaskList() {
         // Moving down
         reorderTask(
           active.id as string,
-          filter.categoryId ? 'category' : 'overall',
+          filter.projectId ? 'project' : 'overall',
           afterTaskId,
           tasks[overIndex + 1]?.id
         );
@@ -73,7 +73,7 @@ export function TaskList() {
     if (!newTaskName.trim()) return;
     const task = await createTask({
       name: newTaskName,
-      category_id: filter.categoryId || undefined,
+      project_id: filter.projectId || undefined,
     });
     setNewTaskName('');
     setShowNewTask(false);
@@ -87,7 +87,7 @@ export function TaskList() {
 
   return (
     <div className="h-full flex flex-col">
-      <CategoryFilter />
+      <ProjectFilter />
 
       {/* Filter tabs */}
       <div className="px-4 py-2 flex gap-2" style={{ borderBottom: '1px solid var(--border-color)' }}>

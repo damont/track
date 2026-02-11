@@ -5,6 +5,8 @@ export type AppTab = 'tasks' | 'scratchpad';
 interface AppContextType {
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
+  selectedProjectId: string | null;
+  setSelectedProjectId: (projectId: string | null) => void;
   navigateToNote: (noteId: string) => void;
   navigateToTask: (taskId: string) => void;
   pendingNoteId: string | null;
@@ -17,6 +19,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<AppTab>('tasks');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [pendingNoteId, setPendingNoteId] = useState<string | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
 
@@ -43,6 +46,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         activeTab,
         setActiveTab,
+        selectedProjectId,
+        setSelectedProjectId,
         navigateToNote,
         navigateToTask,
         pendingNoteId,

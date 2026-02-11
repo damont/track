@@ -7,10 +7,10 @@ from beanie import init_beanie
 
 from api.config import get_settings
 from api.schemas.orm.user import User
-from api.schemas.orm.category import Category
+from api.schemas.orm.project import Project
 from api.schemas.orm.task import Task
 from api.schemas.orm.note import Note
-from api.routes import auth, categories, tasks, notes
+from api.routes import auth, projects, tasks, notes
 
 
 @asynccontextmanager
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     client = AsyncIOMotorClient(settings.mongodb_url)
     await init_beanie(
         database=client[settings.mongodb_db_name],
-        document_models=[User, Category, Task, Note],
+        document_models=[User, Project, Task, Note],
     )
     yield
     # Shutdown
@@ -47,7 +47,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router)
-app.include_router(categories.router)
+app.include_router(projects.router)
 app.include_router(tasks.router)
 app.include_router(notes.router)
 

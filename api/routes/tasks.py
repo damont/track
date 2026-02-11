@@ -36,9 +36,9 @@ def task_to_response(task: Task) -> TaskResponse:
         completed_at=task.completed_at,
         current_status=task.current_status,
         status_history=task.status_history,
-        category_id=str(task.category_id) if task.category_id else None,
+        project_id=str(task.project_id) if task.project_id else None,
         overall_order=task.overall_order,
-        category_order=task.category_order,
+        project_order=task.project_order,
         notes=task.notes,
         next_steps=task.next_steps,
         research=task.research,
@@ -55,9 +55,9 @@ def task_to_list_response(task: Task) -> TaskListResponse:
         name=task.name,
         description=task.description,
         current_status=task.current_status,
-        category_id=str(task.category_id) if task.category_id else None,
+        project_id=str(task.project_id) if task.project_id else None,
         overall_order=task.overall_order,
-        category_order=task.category_order,
+        project_order=task.project_order,
         completed_at=task.completed_at,
         step_count=len(task.next_steps),
         completed_step_count=completed_steps,
@@ -70,7 +70,7 @@ def task_to_list_response(task: Task) -> TaskListResponse:
 async def list_tasks(
     current_user: User = Depends(get_current_user),
     active: Optional[bool] = Query(None, description="Filter by active status"),
-    category_id: Optional[str] = Query(None, description="Filter by category"),
+    project_id: Optional[str] = Query(None, description="Filter by project"),
     task_status: Optional[TaskStatus] = Query(None, alias="status", description="Filter by status"),
 ):
     query = {"user_id": current_user.id}
@@ -80,9 +80,9 @@ async def list_tasks(
     elif active is False:
         query["completed_at"] = {"$ne": None}
 
-    if category_id:
+    if project_id:
         try:
-            query["category_id"] = PydanticObjectId(category_id)
+            query["project_id"] = PydanticObjectId(project_id)
         except Exception:
             pass
 
@@ -102,16 +102,16 @@ async def create_task(
     max_order_task = await Task.find(Task.user_id == current_user.id).sort(-Task.overall_order).first_or_none()
     overall_order = (max_order_task.overall_order + 1000.0) if max_order_task else 1000.0
 
-    category_order = 0.0
-    category_id = None
-    if data.category_id:
+    project_order = 0.0
+    project_id = None
+    if data.project_id:
         try:
-            category_id = PydanticObjectId(data.category_id)
-            max_cat_task = await Task.find(
+            project_id = PydanticObjectId(data.project_id)
+            max_proj_task = await Task.find(
                 Task.user_id == current_user.id,
-                Task.category_id == category_id
-            ).sort(-Task.category_order).first_or_none()
-            category_order = (max_cat_task.category_order + 1000.0) if max_cat_task else 1000.0
+                Task.project_id == project_id
+            ).sort(-Task.project_order).first_or_none()
+            project_order = (max_proj_task.project_order + 1000.0) if max_proj_task else 1000.0
         except Exception:
             pass
 
@@ -119,9 +119,9 @@ async def create_task(
         name=data.name,
         description=data.description,
         user_id=current_user.id,
-        category_id=category_id,
+        project_id=project_id,
         overall_order=overall_order,
-        category_order=category_order,
+        project_order=project_order,
         notes=data.notes,
     )
     await task.insert()
@@ -160,15 +160,15 @@ async def update_task(
 
     update_data = data.model_dump(exclude_unset=True)
 
-    # Handle category_id conversion
-    if "category_id" in update_data:
-        if update_data["category_id"]:
+    # Handle project_id conversion
+    if "project_id" in update_data:
+        if update_data["project_id"]:
             try:
-                update_data["category_id"] = PydanticObjectId(update_data["category_id"])
+                update_data["project_id"] = PydanticObjectId(update_data["project_id"])
             except Exception:
-                del update_data["category_id"]
+                del update_data["project_id"]
         else:
-            update_data["category_id"] = None
+            update_data["project_id"] = None
 
     if update_data:
         update_data["updated_at"] = datetime.utcnow()
@@ -323,7 +323,7 @@ async def reorder_task(
         try:
             before_task = await Task.get(PydanticObjectId(data.before_task_id))
             if before_task and before_task.user_id == current_user.id:
-                before_order = before_task.overall_order if data.order_type == "overall" else before_task.category_order
+                before_order = before_task.overall_order if data.order_type == "overall" else before_task.project_order
         except Exception:
             pass
 
@@ -331,7 +331,7 @@ async def reorder_task(
         try:
             after_task = await Task.get(PydanticObjectId(data.after_task_id))
             if after_task and after_task.user_id == current_user.id:
-                after_order = after_task.overall_order if data.order_type == "overall" else after_task.category_order
+                after_order = after_task.overall_order if data.order_type == "overall" else after_task.project_order
         except Exception:
             pass
 
@@ -340,14 +340,14 @@ async def reorder_task(
     if data.order_type == "overall":
         task.overall_order = new_order
     else:
-        task.category_order = new_order
+        task.project_order = new_order
 
     task.updated_at = datetime.utcnow()
     await task.save()
 
     # Check if rebalancing is needed
     if should_rebalance(before_order, after_order, new_order):
-        await rebalance_orders(current_user.id, data.order_type, task.category_id)
+        await rebalance_orders(current_user.id, data.order_type, task.project_id)
 
     return task_to_response(task)
 
