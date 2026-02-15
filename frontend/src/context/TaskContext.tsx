@@ -24,7 +24,11 @@ interface TaskContextType {
   completeTask: (taskId: string) => Promise<Task>;
   reactivateTask: (taskId: string) => Promise<Task>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<Task>;
+<<<<<<< HEAD
   reorderTask: (taskId: string, orderType: 'overall' | 'project', beforeTaskId?: string, afterTaskId?: string) => Promise<void>;
+=======
+  reorderTask: (taskId: string, orderType: 'overall' | 'category', beforeTaskId?: string, afterTaskId?: string, newOrder?: number) => Promise<void>;
+>>>>>>> 9243cc9 (Category view drag: adjacent placement instead of midpoint)
   addStep: (taskId: string, description: string) => Promise<Task>;
   updateStep: (taskId: string, stepId: string, data: { description?: string; completed?: boolean }) => Promise<Task>;
   deleteStep: (taskId: string, stepId: string) => Promise<Task>;
@@ -172,13 +176,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     taskId: string,
     orderType: 'overall' | 'project',
     beforeTaskId?: string,
-    afterTaskId?: string
+    afterTaskId?: string,
+    newOrder?: number
   ) => {
     await api.post('/api/tasks/reorder', {
       task_id: taskId,
       order_type: orderType,
       before_task_id: beforeTaskId,
       after_task_id: afterTaskId,
+      new_order: newOrder,
     });
     await fetchTasks();
   };

@@ -28,6 +28,7 @@ class TaskReorder(BaseModel):
     order_type: str  # "overall" or "project"
     before_task_id: Optional[str] = None  # Task to place after
     after_task_id: Optional[str] = None   # Task to place before
+    new_order: Optional[float] = None  # If set, directly assign this order value
 
 
 class StepCreate(BaseModel):
