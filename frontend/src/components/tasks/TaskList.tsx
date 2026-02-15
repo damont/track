@@ -46,7 +46,7 @@ export function TaskList() {
       const activeIndex = tasks.findIndex(t => t.id === active.id);
       const overIndex = tasks.findIndex(t => t.id === over.id);
 
-      if (filter.categoryId) {
+      if (filter.projectId) {
         // Category view: place adjacent to the target task (±1)
         // to minimize disruption to the global order
         const targetTask = tasks[overIndex];

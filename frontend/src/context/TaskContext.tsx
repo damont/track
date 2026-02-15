@@ -24,11 +24,7 @@ interface TaskContextType {
   completeTask: (taskId: string) => Promise<Task>;
   reactivateTask: (taskId: string) => Promise<Task>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<Task>;
-<<<<<<< HEAD
-  reorderTask: (taskId: string, orderType: 'overall' | 'project', beforeTaskId?: string, afterTaskId?: string) => Promise<void>;
-=======
-  reorderTask: (taskId: string, orderType: 'overall' | 'category', beforeTaskId?: string, afterTaskId?: string, newOrder?: number) => Promise<void>;
->>>>>>> 9243cc9 (Category view drag: adjacent placement instead of midpoint)
+  reorderTask: (taskId: string, orderType: 'overall' | 'project', beforeTaskId?: string, afterTaskId?: string, newOrder?: number) => Promise<void>;
   addStep: (taskId: string, description: string) => Promise<Task>;
   updateStep: (taskId: string, stepId: string, data: { description?: string; completed?: boolean }) => Promise<Task>;
   deleteStep: (taskId: string, stepId: string) => Promise<Task>;

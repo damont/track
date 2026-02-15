@@ -349,15 +349,9 @@ async def reorder_task(
     task.updated_at = datetime.utcnow()
     await task.save()
 
-<<<<<<< HEAD
-    # Check if rebalancing is needed
-    if should_rebalance(before_order, after_order, new_order):
-        await rebalance_orders(current_user.id, data.order_type, task.project_id)
-=======
     # Check if rebalancing is needed (skip for direct assignment)
     if data.new_order is None and should_rebalance(before_order, after_order, new_order):
         await rebalance_orders(current_user.id, data.order_type, task.category_id)
->>>>>>> 9243cc9 (Category view drag: adjacent placement instead of midpoint)
 
     return task_to_response(task)
 
