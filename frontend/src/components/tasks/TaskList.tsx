@@ -46,25 +46,40 @@ export function TaskList() {
       const activeIndex = tasks.findIndex(t => t.id === active.id);
       const overIndex = tasks.findIndex(t => t.id === over.id);
 
-      const beforeTaskId = overIndex > 0 ? tasks[overIndex - 1]?.id : undefined;
-      const afterTaskId = tasks[overIndex]?.id;
-
-      if (activeIndex > overIndex) {
-        // Moving up
+      if (filter.projectId) {
+        // Category view: place adjacent to the target task (±1)
+        // to minimize disruption to the global order
+        const targetTask = tasks[overIndex];
+        const newOrder = activeIndex > overIndex
+          ? targetTask.overall_order - 1  // moving up: just above target
+          : targetTask.overall_order + 1; // moving down: just below target
         reorderTask(
           active.id as string,
-          filter.projectId ? 'project' : 'overall',
-          beforeTaskId,
-          afterTaskId
+          'overall',
+          undefined,
+          undefined,
+          newOrder
         );
       } else {
-        // Moving down
-        reorderTask(
-          active.id as string,
-          filter.projectId ? 'project' : 'overall',
-          afterTaskId,
-          tasks[overIndex + 1]?.id
-        );
+        // Global view: use midpoint placement between neighbors
+        const beforeTaskId = overIndex > 0 ? tasks[overIndex - 1]?.id : undefined;
+        const afterTaskId = tasks[overIndex]?.id;
+
+        if (activeIndex > overIndex) {
+          reorderTask(
+            active.id as string,
+            'overall',
+            beforeTaskId,
+            afterTaskId
+          );
+        } else {
+          reorderTask(
+            active.id as string,
+            'overall',
+            afterTaskId,
+            tasks[overIndex + 1]?.id
+          );
+        }
       }
     }
   };
