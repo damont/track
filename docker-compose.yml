@@ -13,6 +13,22 @@ services:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
+  track-mcp:
+    build:
+      context: .
+      target: mcp
+    ports:
+      - "8011:8011"
+    environment:
+      - MONGODB_URL=mongodb://host.docker.internal:27017
+      - MONGODB_DB_NAME=track
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - track-api
+    restart: unless-stopped
+
   track-frontend:
     build:
       context: .
