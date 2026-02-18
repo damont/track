@@ -87,3 +87,9 @@ export interface TokenResponse {
   access_token: string;
   token_type: string;
 }
+
+export interface AgentTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in_days: number;
+}

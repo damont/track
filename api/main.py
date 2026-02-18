@@ -32,6 +32,9 @@ app = FastAPI(
     description="Task tracking application API",
     version="0.1.0",
     lifespan=lifespan,
+    docs_url="/api/agent",
+    openapi_url="/api/openapi.json",
+    redoc_url=None,
 )
 
 # CORS middleware
