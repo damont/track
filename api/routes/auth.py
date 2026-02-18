@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -7,6 +9,8 @@ from api.schemas.dto.auth import (
     UserLogin,
     UserResponse,
     TokenResponse,
+    AgentTokenRequest,
+    AgentTokenResponse,
 )
 from api.utils.auth import (
     hash_password,
@@ -82,6 +86,37 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token(str(user.id))
 
     return TokenResponse(access_token=access_token)
+
+
+@router.post("/agent-token", response_model=AgentTokenResponse)
+async def agent_token(data: AgentTokenRequest):
+    user = await User.find_one(User.username == data.username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
+    if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is disabled",
+        )
+
+    access_token = create_access_token(
+        str(user.id), expires_delta=timedelta(days=data.expires_in_days)
+    )
+
+    return AgentTokenResponse(
+        access_token=access_token,
+        expires_in_days=data.expires_in_days,
+    )
 
 
 @router.get("/me", response_model=UserResponse)

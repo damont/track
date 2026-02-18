@@ -1,13 +1,25 @@
 import { useState } from 'react';
 import { Login } from './Login';
 import { Register } from './Register';
+import { AgentAuth } from './AgentAuth';
+
+type AuthMode = 'login' | 'register' | 'agent';
 
 export function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>('login');
 
-  if (isLogin) {
-    return <Login onSwitchToRegister={() => setIsLogin(false)} />;
+  if (mode === 'register') {
+    return <Register onSwitchToLogin={() => setMode('login')} />;
   }
 
-  return <Register onSwitchToLogin={() => setIsLogin(true)} />;
+  if (mode === 'agent') {
+    return <AgentAuth onSwitchToLogin={() => setMode('login')} />;
+  }
+
+  return (
+    <Login
+      onSwitchToRegister={() => setMode('register')}
+      onSwitchToAgent={() => setMode('agent')}
+    />
+  );
 }
