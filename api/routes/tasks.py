@@ -77,6 +77,9 @@ async def list_tasks(
 
     if active is True:
         query["completed_at"] = None
+        # Also exclude cancelled tasks from active list (unless explicitly filtering by status)
+        if not task_status:
+            query["current_status.status"] = {"$ne": TaskStatus.CANCELLED.value}
     elif active is False:
         query["completed_at"] = {"$ne": None}
 
