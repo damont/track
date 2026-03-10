@@ -7,10 +7,9 @@ interface RegisterProps {
 
 export function Register({ onSwitchToLogin }: RegisterProps) {
   const { register } = useAuth();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -20,7 +19,7 @@ export function Register({ onSwitchToLogin }: RegisterProps) {
     setIsLoading(true);
 
     try {
-      await register(email, username, password, displayName || undefined);
+      await register(name, email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -47,6 +46,22 @@ export function Register({ onSwitchToLogin }: RegisterProps) {
           )}
           <div className="space-y-4">
             <div>
+              <label htmlFor="name" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Name
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Display name"
+                className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
+                style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div>
               <label htmlFor="email" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                 Email
               </label>
@@ -57,35 +72,6 @@ export function Register({ onSwitchToLogin }: RegisterProps) {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
-                style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
-                style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="displayName" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Display Name (optional)
-              </label>
-              <input
-                id="displayName"
-                name="displayName"
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
                 style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
