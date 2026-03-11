@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp, AppTab } from '../../context/AppContext';
 
 interface AppLayoutProps {
-  sidebar: ReactNode;
+  sidebar: ReactNode | null;
   children: ReactNode;
 }
 
@@ -50,15 +50,37 @@ export function AppLayout({ sidebar, children }: AppLayoutProps) {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {user?.display_name || user?.username}
-            </span>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className="text-sm px-3 py-1 rounded-md cursor-pointer"
+              style={{
+                color: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-raised)',
+                border: '1px solid var(--border-color)',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--selected-bg)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-raised)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+            >
+              {user?.name}
+            </button>
             <button
               onClick={logout}
-              className="text-sm hover:underline"
+              className="text-sm cursor-pointer"
               style={{ color: 'var(--text-muted)' }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.color = 'var(--text-muted)';
+              }}
             >
-              Logout
+              Sign out
             </button>
           </div>
         </div>
@@ -67,9 +89,11 @@ export function AppLayout({ sidebar, children }: AppLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-80 overflow-y-auto" style={{ backgroundColor: 'var(--bg-surface)', borderRight: '1px solid var(--border-color)' }}>
-          {sidebar}
-        </aside>
+        {sidebar && (
+          <aside className="w-80 overflow-y-auto" style={{ backgroundColor: 'var(--bg-surface)', borderRight: '1px solid var(--border-color)' }}>
+            {sidebar}
+          </aside>
+        )}
 
         {/* Main panel */}
         <main className="flex-1 overflow-y-auto p-6">

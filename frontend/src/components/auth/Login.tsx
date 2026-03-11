@@ -3,12 +3,11 @@ import { useAuth } from '../../context/AuthContext';
 
 interface LoginProps {
   onSwitchToRegister: () => void;
-  onSwitchToAgent: () => void;
 }
 
-export function Login({ onSwitchToRegister, onSwitchToAgent }: LoginProps) {
+export function Login({ onSwitchToRegister }: LoginProps) {
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +18,7 @@ export function Login({ onSwitchToRegister, onSwitchToAgent }: LoginProps) {
     setIsLoading(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -46,16 +45,16 @@ export function Login({ onSwitchToRegister, onSwitchToAgent }: LoginProps) {
           )}
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Username
+              <label htmlFor="email" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Email
               </label>
               <input
-                id="username"
-                name="username"
-                type="text"
+                id="email"
+                name="email"
+                type="email"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
                 style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
@@ -88,7 +87,7 @@ export function Login({ onSwitchToRegister, onSwitchToAgent }: LoginProps) {
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
-          <div className="text-center space-y-2">
+          <div className="text-center">
             <button
               type="button"
               onClick={onSwitchToRegister}
@@ -96,14 +95,6 @@ export function Login({ onSwitchToRegister, onSwitchToAgent }: LoginProps) {
               style={{ color: 'var(--accent)' }}
             >
               Don't have an account? Register
-            </button>
-            <button
-              type="button"
-              onClick={onSwitchToAgent}
-              className="text-sm hover:underline block w-full"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Generate an agent token
             </button>
           </div>
         </form>

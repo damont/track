@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Login } from './Login';
 import { Register } from './Register';
-import { AgentAuth } from './AgentAuth';
 
-type AuthMode = 'login' | 'register' | 'agent';
+type AuthMode = 'login' | 'register';
 
 export function AuthPage() {
   const [mode, setMode] = useState<AuthMode>('login');
@@ -12,14 +11,9 @@ export function AuthPage() {
     return <Register onSwitchToLogin={() => setMode('login')} />;
   }
 
-  if (mode === 'agent') {
-    return <AgentAuth onSwitchToLogin={() => setMode('login')} />;
-  }
-
   return (
     <Login
       onSwitchToRegister={() => setMode('register')}
-      onSwitchToAgent={() => setMode('agent')}
     />
   );
 }

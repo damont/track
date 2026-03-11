@@ -3,22 +3,20 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class UserRegister(BaseModel):
+    name: str = Field(..., description="Display name")
     email: EmailStr
-    username: str
     password: str
-    display_name: Optional[str] = None
 
 
 class UserLogin(BaseModel):
-    username: str
+    email: EmailStr
     password: str
 
 
 class UserResponse(BaseModel):
     id: str
+    name: str
     email: EmailStr
-    username: str
-    display_name: Optional[str]
     is_active: bool
 
 
@@ -28,7 +26,7 @@ class TokenResponse(BaseModel):
 
 
 class AgentTokenRequest(BaseModel):
-    username: str
+    email: EmailStr
     password: str
     expires_in_days: int = Field(default=30, ge=1, le=365)
 

@@ -8,6 +8,7 @@ import { TaskList } from './components/tasks/TaskList';
 import { TaskDetail } from './components/tasks/TaskDetail';
 import { NoteList } from './components/notes/NoteList';
 import { NoteDetail } from './components/notes/NoteDetail';
+import { UserProfile } from './components/UserProfile';
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -25,8 +26,8 @@ function AppContent() {
     return <AuthPage />;
   }
 
-  const sidebar = activeTab === 'tasks' ? <TaskList /> : <NoteList />;
-  const main = activeTab === 'tasks' ? <TaskDetail /> : <NoteDetail />;
+  const sidebar = activeTab === 'profile' ? null : activeTab === 'tasks' ? <TaskList /> : <NoteList />;
+  const main = activeTab === 'profile' ? <UserProfile /> : activeTab === 'tasks' ? <TaskDetail /> : <NoteDetail />;
 
   return (
     <TaskProvider>

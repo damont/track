@@ -32,47 +32,39 @@ async def register(data: UserRegister):
             detail="Email already registered",
         )
 
-    existing_username = await User.find_one(User.username == data.username)
-    if existing_username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken",
-        )
-
     # Create user
     user = User(
         email=data.email,
-        username=data.username,
+        username=data.email,  # Use email as username for backwards compatibility
         hashed_password=hash_password(data.password),
-        display_name=data.display_name,
+        display_name=data.name,
     )
     await user.insert()
 
     return UserResponse(
         id=str(user.id),
+        name=user.display_name or data.name,
         email=user.email,
-        username=user.username,
-        display_name=user.display_name,
         is_active=user.is_active,
     )
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    # Find user by username
-    user = await User.find_one(User.username == form_data.username)
+async def login(data: UserLogin):
+    # Find user by email
+    user = await User.find_one(User.email == data.email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     # Verify password
-    if not verify_password(form_data.password, user.hashed_password):
+    if not verify_password(data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -90,17 +82,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @router.post("/agent-token", response_model=AgentTokenResponse)
 async def agent_token(data: AgentTokenRequest):
-    user = await User.find_one(User.username == data.username)
+    user = await User.find_one(User.email == data.email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            detail="Invalid email or password",
         )
 
     if not verify_password(data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            detail="Invalid email or password",
         )
 
     if not user.is_active:
@@ -123,8 +115,7 @@ async def agent_token(data: AgentTokenRequest):
 async def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse(
         id=str(current_user.id),
+        name=current_user.display_name or current_user.username,
         email=current_user.email,
-        username=current_user.username,
-        display_name=current_user.display_name,
         is_active=current_user.is_active,
     )
