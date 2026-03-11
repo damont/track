@@ -77,9 +77,8 @@ export interface Note {
 
 export interface User {
   id: string;
+  name: string;
   email: string;
-  username: string;
-  display_name: string | null;
   is_active: boolean;
 }
 

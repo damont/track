@@ -11,7 +11,7 @@ interface TokenResult {
 }
 
 export function AgentAuth({ onSwitchToLogin }: AgentAuthProps) {
-  const [username, setUsername] = useState('');
+  const [email, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export function AgentAuth({ onSwitchToLogin }: AgentAuthProps) {
     setIsLoading(true);
 
     try {
-      const result = await api.agentToken(username, password, expiresInDays);
+      const result = await api.agentToken(email, password, expiresInDays);
       setTokenResult({
         access_token: result.access_token,
         expires_in_days: result.expires_in_days,
@@ -130,15 +130,15 @@ export function AgentAuth({ onSwitchToLogin }: AgentAuthProps) {
             )}
             <div className="space-y-4">
               <div>
-                <label htmlFor="agent-username" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Username
+                <label htmlFor="agent-email" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Email
                 </label>
                 <input
-                  id="agent-username"
-                  name="username"
-                  type="text"
+                  id="agent-email"
+                  name="email"
+                  type="email"
                   required
-                  value={username}
+                  value={email}
                   onChange={(e) => setUsername(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
                   style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}

@@ -71,17 +71,13 @@ class ApiClient {
     return this.request<T>('DELETE', endpoint);
   }
 
-  async login(username: string, password: string): Promise<string> {
-    const formData = new URLSearchParams();
-    formData.append('username', username);
-    formData.append('password', password);
-
+  async login(email: string, password: string): Promise<string> {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: formData,
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
@@ -95,7 +91,7 @@ class ApiClient {
   }
 
   async agentToken(
-    username: string,
+    email: string,
     password: string,
     expiresInDays: number
   ): Promise<{ access_token: string; token_type: string; expires_in_days: number }> {
@@ -105,7 +101,7 @@ class ApiClient {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username,
+        email,
         password,
         expires_in_days: expiresInDays,
       }),

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-export type AppTab = 'tasks' | 'scratchpad';
+export type AppTab = 'tasks' | 'scratchpad' | 'profile';
 
 interface AppContextType {
   activeTab: AppTab;
