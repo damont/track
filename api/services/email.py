@@ -42,8 +42,8 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> None:
 </body>
 </html>"""
 
-    msg.attach(MIMEText(plain, "plain"))
-    msg.attach(MIMEText(html, "html"))
+    msg.attach(MIMEText(plain, "plain", _charset="utf-8"))
+    msg.attach(MIMEText(html, "html", _charset="utf-8"))
 
     await aiosmtplib.send(
         msg,
