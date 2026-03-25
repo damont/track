@@ -10,6 +10,7 @@ from api.schemas.orm.user import User
 from api.schemas.orm.project import Project
 from api.schemas.orm.task import Task
 from api.schemas.orm.note import Note
+from api.schemas.orm.password_reset import PasswordResetToken
 from api.routes import auth, projects, tasks, notes
 
 
@@ -20,7 +21,7 @@ async def lifespan(app: FastAPI):
     client = AsyncIOMotorClient(settings.mongodb_url)
     await init_beanie(
         database=client[settings.mongodb_db_name],
-        document_models=[User, Project, Task, Note],
+        document_models=[User, Project, Task, Note, PasswordResetToken],
     )
     yield
     # Shutdown
