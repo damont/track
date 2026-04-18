@@ -21,10 +21,9 @@ export function NoteDetail() {
     projects,
     updateNote,
     deleteNote,
-    selectNote,
   } = useNotes();
   const { tasks, fetchTasks, linkNote, unlinkNote } = useTasks();
-  const { navigateToTask } = useApp();
+  const { openTask, closeFocus, selectedProjectId } = useApp();
 
   const [editContent, setEditContent] = useState('');
   const [showToolbar, setShowToolbar] = useState(false);
@@ -115,11 +114,11 @@ export function NoteDetail() {
   };
 
   const handleCreateTask = async () => {
-    if (!selectedText || !selectedNote) return;
+    if (!selectedText || !selectedNote || !selectedNote.project_id) return;
     try {
       const task = await api.post<Task>('/api/tasks', {
         name: selectedText,
-        project_id: selectedNote.project_id || undefined,
+        project_id: selectedNote.project_id,
       });
       await linkNote(task.id, selectedNote.id);
       await fetchTasks();
@@ -292,7 +291,7 @@ export function NoteDetail() {
 
             {/* Close */}
             <button
-              onClick={() => selectNote(null)}
+              onClick={() => closeFocus()}
               className="px-3 py-1"
               style={{ color: 'var(--text-muted)' }}
             >
@@ -310,11 +309,13 @@ export function NoteDetail() {
           </label>
           <select
             value={selectedNote.project_id || ''}
-            onChange={(e) => updateNote(selectedNote.id, { project_id: e.target.value })}
+            onChange={(e) => {
+              if (!e.target.value) return;
+              updateNote(selectedNote.id, { project_id: e.target.value });
+            }}
             className="px-3 py-2 rounded text-sm focus:outline-none"
             style={inputStyle}
           >
-            <option value="">No project</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -477,7 +478,7 @@ export function NoteDetail() {
               <div className="flex items-start justify-between">
                 <div
                   className="cursor-pointer flex-1 min-w-0"
-                  onClick={() => navigateToTask(task.id)}
+                  onClick={() => openTask(task.id, selectedProjectId)}
                 >
                   <span className="text-sm" style={{ color: 'var(--accent)' }}>
                     {task.name}

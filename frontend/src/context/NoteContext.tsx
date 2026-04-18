@@ -16,8 +16,8 @@ interface NoteContextType {
   filter: NoteFilter;
   setFilter: (filter: Partial<NoteFilter>) => void;
   fetchNotes: () => Promise<void>;
-  selectNote: (noteId: string | null) => void;
-  createNote: (content: string, projectId?: string) => Promise<Note>;
+  selectNote: (noteId: string | null) => Promise<void>;
+  createNote: (content: string, projectId: string) => Promise<Note>;
   updateNote: (noteId: string, data: { content?: string; pinned?: boolean; order?: number; tags?: string[]; project_id?: string }) => Promise<Note>;
   deleteNote: (noteId: string) => Promise<void>;
   createProject: (data: { name: string; color?: string }) => Promise<Project>;
@@ -28,7 +28,7 @@ const NoteContext = createContext<NoteContextType | undefined>(undefined);
 
 export function NoteProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const { pendingNoteId, clearPendingNote, selectedProjectId, setSelectedProjectId } = useApp();
+  const { selectedProjectId, focusKind, focusId, openProject } = useApp();
   const [notes, setNotes] = useState<Note[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -39,14 +39,15 @@ export function NoteProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchNotes = useCallback(async () => {
+    if (!selectedProjectId) {
+      setNotes([]);
+      return;
+    }
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedProjectId) {
-        params.set('project_id', selectedProjectId);
-      }
-      const queryString = params.toString();
-      const endpoint = `/api/notes${queryString ? `?${queryString}` : ''}`;
+      params.set('project_id', selectedProjectId);
+      const endpoint = `/api/notes?${params.toString()}`;
       const data = await api.get<Note[]>(endpoint);
       setNotes(data);
     } finally {
@@ -67,34 +68,45 @@ export function NoteProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, fetchNotes, fetchProjects]);
 
   const setFilter = (newFilter: Partial<NoteFilter>) => {
-    if ('projectId' in newFilter) {
-      setSelectedProjectId(newFilter.projectId ?? null);
+    if ('projectId' in newFilter && newFilter.projectId) {
+      openProject(newFilter.projectId);
     }
   };
 
-  const selectNote = useCallback((noteId: string | null) => {
-    if (!noteId) {
-      setSelectedNote(null);
-      return;
-    }
-    const note = notes.find(n => n.id === noteId);
-    if (note) {
-      setSelectedNote(note);
-    }
-  }, [notes]);
+  const selectNote = useCallback(
+    async (noteId: string | null) => {
+      if (!noteId) {
+        setSelectedNote(null);
+        return;
+      }
+      const local = notes.find((n) => n.id === noteId);
+      if (local) {
+        setSelectedNote(local);
+        return;
+      }
+      try {
+        const fetched = await api.get<Note>(`/api/notes/${noteId}`);
+        setSelectedNote(fetched);
+      } catch {
+        setSelectedNote(null);
+      }
+    },
+    [notes]
+  );
 
-  // Handle navigation from other parts of the app (e.g. task linked notes)
+  // Sync selection from URL focus
   useEffect(() => {
-    if (pendingNoteId) {
-      selectNote(pendingNoteId);
-      clearPendingNote();
+    if (focusKind === 'notes' && focusId) {
+      selectNote(focusId);
+    } else {
+      setSelectedNote(null);
     }
-  }, [pendingNoteId, selectNote, clearPendingNote]);
+  }, [focusKind, focusId, selectNote]);
 
-  const createNote = async (content: string, projectId?: string) => {
+  const createNote = async (content: string, projectId: string) => {
     const note = await api.post<Note>('/api/notes', {
       content,
-      project_id: projectId || undefined,
+      project_id: projectId,
     });
     await fetchNotes();
     setSelectedNote(note);

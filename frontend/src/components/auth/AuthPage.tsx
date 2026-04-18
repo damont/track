@@ -1,50 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Login } from './Login';
 import { Register } from './Register';
 import { ForgotPassword } from './ForgotPassword';
 import { ResetPassword } from './ResetPassword';
 
-type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password';
-
 export function AuthPage() {
-  const [mode, setMode] = useState<AuthMode>('login');
-  const [resetToken, setResetToken] = useState<string | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = useParams();
 
-  useEffect(() => {
-    const path = window.location.pathname;
-    const match = path.match(/^\/reset-password\/(.+)$/);
-    if (match) {
-      setResetToken(match[1]);
-      setMode('reset-password');
-    } else if (path === '/forgot-password') {
-      setMode('forgot-password');
-    }
-  }, []);
+  const goToLogin = () => navigate('/login');
 
-  const goToLogin = () => {
-    window.history.pushState({}, '', '/');
-    setMode('login');
-  };
-
-  if (mode === 'reset-password' && resetToken) {
-    return <ResetPassword token={resetToken} onBackToLogin={goToLogin} />;
+  if (location.pathname.startsWith('/reset-password/') && params.token) {
+    return <ResetPassword token={params.token} onBackToLogin={goToLogin} />;
   }
-
-  if (mode === 'forgot-password') {
+  if (location.pathname === '/forgot-password') {
     return <ForgotPassword onBack={goToLogin} />;
   }
-
-  if (mode === 'register') {
-    return <Register onSwitchToLogin={() => setMode('login')} />;
+  if (location.pathname === '/register') {
+    return <Register onSwitchToLogin={goToLogin} />;
   }
 
   return (
     <Login
-      onSwitchToRegister={() => setMode('register')}
-      onForgotPassword={() => {
-        window.history.pushState({}, '', '/forgot-password');
-        setMode('forgot-password');
-      }}
+      onSwitchToRegister={() => navigate('/register')}
+      onForgotPassword={() => navigate('/forgot-password')}
     />
   );
 }

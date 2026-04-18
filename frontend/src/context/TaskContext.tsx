@@ -18,7 +18,7 @@ interface TaskContextType {
   fetchTasks: () => Promise<void>;
   fetchProjects: () => Promise<void>;
   selectTask: (taskId: string | null) => Promise<void>;
-  createTask: (data: { name: string; description?: string; project_id?: string; notes?: string }) => Promise<Task>;
+  createTask: (data: { name: string; description?: string; project_id: string; notes?: string }) => Promise<Task>;
   updateTask: (taskId: string, data: { name?: string; description?: string; project_id?: string; notes?: string }) => Promise<Task>;
   deleteTask: (taskId: string) => Promise<void>;
   completeTask: (taskId: string) => Promise<Task>;
@@ -33,8 +33,8 @@ interface TaskContextType {
   deleteResearch: (taskId: string, refId: string) => Promise<Task>;
   linkNote: (taskId: string, noteId: string) => Promise<Task>;
   unlinkNote: (taskId: string, noteId: string) => Promise<Task>;
-  createProject: (data: { name: string; color?: string }) => Promise<Project>;
-  updateProject: (projectId: string, data: { name?: string; color?: string }) => Promise<Project>;
+  createProject: (data: { name: string; color?: string; description?: string }) => Promise<Project>;
+  updateProject: (projectId: string, data: { name?: string; color?: string; description?: string }) => Promise<Project>;
   deleteProject: (projectId: string) => Promise<void>;
 }
 
@@ -42,7 +42,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const { pendingTaskId, clearPendingTask, selectedProjectId, setSelectedProjectId } = useApp();
+  const { selectedProjectId, focusKind, focusId, openProject } = useApp();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -58,20 +58,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchTasks = useCallback(async () => {
+    if (!selectedProjectId) {
+      setTasks([]);
+      return;
+    }
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
       if (localFilter.active !== null) {
         params.set('active', String(localFilter.active));
       }
-      if (selectedProjectId) {
-        params.set('project_id', selectedProjectId);
-      }
+      params.set('project_id', selectedProjectId);
       if (localFilter.status) {
         params.set('status', localFilter.status);
       }
-      const queryString = params.toString();
-      const endpoint = `/api/tasks${queryString ? `?${queryString}` : ''}`;
+      const endpoint = `/api/tasks?${params.toString()}`;
       const data = await api.get<TaskListItem[]>(endpoint);
       setTasks(data);
     } finally {
@@ -92,12 +93,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, fetchTasks, fetchProjects]);
 
   const setFilter = (newFilter: Partial<TaskContextType['filter']>) => {
-    if ('projectId' in newFilter) {
-      setSelectedProjectId(newFilter.projectId ?? null);
+    if ('projectId' in newFilter && newFilter.projectId) {
+      openProject(newFilter.projectId);
     }
-    const { projectId, ...rest } = newFilter;
+    const { projectId: _ignored, ...rest } = newFilter;
     if (Object.keys(rest).length > 0) {
-      setLocalFilter(prev => ({ ...prev, ...rest }));
+      setLocalFilter((prev) => ({ ...prev, ...rest }));
     }
   };
 
@@ -110,15 +111,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setSelectedTask(task);
   }, []);
 
-  // Handle navigation from other parts of the app (e.g. note linked tasks)
+  // Sync selected task to URL focus
   useEffect(() => {
-    if (pendingTaskId) {
-      selectTask(pendingTaskId);
-      clearPendingTask();
+    if (focusKind === 'tasks' && focusId) {
+      selectTask(focusId);
+    } else {
+      setSelectedTask(null);
     }
-  }, [pendingTaskId, selectTask, clearPendingTask]);
+  }, [focusKind, focusId, selectTask]);
 
-  const createTask = async (data: { name: string; description?: string; project_id?: string; notes?: string }) => {
+  const createTask = async (data: { name: string; description?: string; project_id: string; notes?: string }) => {
     const task = await api.post<Task>('/api/tasks', data);
     await fetchTasks();
     return task;

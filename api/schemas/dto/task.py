@@ -8,7 +8,7 @@ from api.schemas.orm.task import TaskStatus, Step, ResearchReference, StatusEntr
 class TaskCreate(BaseModel):
     name: str
     description: Optional[str] = None
-    project_id: Optional[str] = None
+    project_id: str
     notes: Optional[str] = None
 
 
