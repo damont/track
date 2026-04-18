@@ -1,21 +1,12 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { TaskListItem } from '../../types';
-import { useTasks } from '../../context/TaskContext';
 
 interface TaskItemProps {
   task: TaskListItem;
   isSelected: boolean;
   onSelect: () => void;
 }
-
-const statusColors: Record<string, { bg: string; text: string }> = {
-  pending: { bg: 'rgba(148, 153, 165, 0.15)', text: '#8b8fa0' },
-  in_progress: { bg: 'rgba(108, 138, 236, 0.15)', text: '#6c8aec' },
-  on_hold: { bg: 'rgba(214, 174, 82, 0.15)', text: '#c9a84c' },
-  completed: { bg: 'rgba(82, 184, 120, 0.15)', text: '#52b878' },
-  cancelled: { bg: 'rgba(200, 100, 100, 0.15)', text: '#c06464' },
-};
 
 const statusLabels: Record<string, string> = {
   pending: 'Pending',
@@ -26,17 +17,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export function TaskItem({ task, isSelected, onSelect }: TaskItemProps) {
-  const { projects } = useTasks();
-  const project = projects.find(p => p.id === task.project_id);
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: task.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -44,29 +26,19 @@ export function TaskItem({ task, isSelected, onSelect }: TaskItemProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const statusColor = statusColors[task.current_status.status] || statusColors.pending;
-
   return (
     <div
       ref={setNodeRef}
-      style={{
-        ...style,
-        borderBottom: '1px solid var(--border-color)',
-        backgroundColor: isSelected ? 'var(--selected-bg)' : 'transparent',
-        borderLeft: isSelected ? '4px solid var(--accent)' : '4px solid transparent',
-      }}
-      className="p-3 cursor-pointer"
+      style={style}
+      className={`protocol-card ${isSelected ? 'is-selected' : ''}`}
       onClick={onSelect}
-      onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--bg-raised)'; }}
-      onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent'; }}
     >
-      <div className="flex items-start gap-2">
-        {/* Drag handle */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <div
           {...attributes}
           {...listeners}
-          className="mt-1 cursor-grab"
-          style={{ color: 'var(--text-muted)' }}
+          className="mt-0.5 cursor-grab"
+          style={{ color: 'var(--text-faint)' }}
           onClick={(e) => e.stopPropagation()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -74,49 +46,54 @@ export function TaskItem({ task, isSelected, onSelect }: TaskItemProps) {
           </svg>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{task.name}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {task.name}
           </div>
 
           {task.next_step_description ? (
             <div
-              className="flex items-center gap-2 mt-1.5 px-2.5 py-1.5 rounded"
-              style={{ backgroundColor: 'rgba(108, 138, 236, 0.1)', border: '1px solid rgba(108, 138, 236, 0.2)' }}
+              style={{
+                marginTop: 6,
+                padding: '6px 10px',
+                borderRadius: 8,
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                background: 'rgba(60, 194, 255, 0.08)',
+                border: '1px solid var(--panel-border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
             >
-              <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
-              <span className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+              <span className="glow-dot" />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {task.next_step_description}
               </span>
             </div>
           ) : task.description ? (
-            <p className="text-sm truncate mt-1" style={{ color: 'var(--text-muted)' }}>{task.description}</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '6px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {task.description}
+            </p>
           ) : null}
 
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span
-              className="text-xs px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: statusColor.bg, color: statusColor.text }}
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                padding: '2px 8px',
+                borderRadius: 9999,
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--panel-border)',
+                background: 'rgba(255,255,255,0.02)',
+              }}
             >
-              {statusLabels[task.current_status.status]}
+              {statusLabels[task.current_status.status] || task.current_status.status}
             </span>
-
-            {project && (
-              <span
-                className="text-xs px-2 py-0.5 rounded-full"
-                style={{
-                  backgroundColor: project.color ? `${project.color}30` : 'var(--bg-raised)',
-                  color: project.color || 'var(--text-secondary)',
-                }}
-              >
-                {project.name}
-              </span>
-            )}
-
             {task.step_count > 0 && (
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                 {task.completed_step_count}/{task.step_count} steps
               </span>
             )}

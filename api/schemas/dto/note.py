@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class NoteCreate(BaseModel):
     content: str
-    project_id: Optional[str] = None
+    project_id: str
 
 
 class NoteUpdate(BaseModel):

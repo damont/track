@@ -11,7 +11,8 @@ from api.schemas.orm.project import Project
 from api.schemas.orm.task import Task
 from api.schemas.orm.note import Note
 from api.schemas.orm.password_reset import PasswordResetToken
-from api.routes import auth, projects, tasks, notes
+from api.schemas.orm.insight import AgentInsight
+from api.routes import auth, projects, tasks, notes, insights
 
 
 @asynccontextmanager
@@ -21,7 +22,7 @@ async def lifespan(app: FastAPI):
     client = AsyncIOMotorClient(settings.mongodb_url)
     await init_beanie(
         database=client[settings.mongodb_db_name],
-        document_models=[User, Project, Task, Note, PasswordResetToken],
+        document_models=[User, Project, Task, Note, PasswordResetToken, AgentInsight],
     )
     yield
     # Shutdown
@@ -54,6 +55,7 @@ app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
 app.include_router(notes.router)
+app.include_router(insights.router)
 
 
 @app.get("/api/health")

@@ -61,7 +61,23 @@ export interface Project {
   id: string;
   name: string;
   color: string | null;
+  description: string | null;
   order: number;
+}
+
+export type InsightKind = 'neural' | 'scheduling' | 'risk' | 'summary' | string;
+
+export interface AgentInsight {
+  id: string;
+  project_id: string;
+  title: string;
+  body: string;
+  agent_name: string | null;
+  kind: InsightKind;
+  created_at: string;
+  linked_task_ids: string[];
+  linked_note_ids: string[];
+  dismissed_at: string | null;
 }
 
 export interface Note {

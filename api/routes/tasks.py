@@ -7,6 +7,7 @@ from beanie import PydanticObjectId
 from api.schemas.orm.user import User
 from api.schemas.orm.task import Task, TaskStatus, StatusEntry, Step, ResearchReference
 from api.schemas.orm.note import Note
+from api.schemas.orm.project import Project
 from api.schemas.dto.task import (
     TaskCreate,
     TaskUpdate,
@@ -73,7 +74,7 @@ async def list_tasks(
     project_id: Optional[str] = Query(None, description="Filter by project"),
     task_status: Optional[TaskStatus] = Query(None, alias="status", description="Filter by status"),
 ):
-    query = {"user_id": current_user.id}
+    query = {"user_id": current_user.id, "project_id": {"$ne": None}}
 
     if active is True:
         query["completed_at"] = None
@@ -101,22 +102,23 @@ async def create_task(
     data: TaskCreate,
     current_user: User = Depends(get_current_user),
 ):
-    # Get the max order to place new task at end
+    try:
+        project_id = PydanticObjectId(data.project_id)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid project_id")
+
+    project = await Project.get(project_id)
+    if project is None or project.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
     max_order_task = await Task.find(Task.user_id == current_user.id).sort(-Task.overall_order).first_or_none()
     overall_order = (max_order_task.overall_order + 1000.0) if max_order_task else 1000.0
 
-    project_order = 0.0
-    project_id = None
-    if data.project_id:
-        try:
-            project_id = PydanticObjectId(data.project_id)
-            max_proj_task = await Task.find(
-                Task.user_id == current_user.id,
-                Task.project_id == project_id
-            ).sort(-Task.project_order).first_or_none()
-            project_order = (max_proj_task.project_order + 1000.0) if max_proj_task else 1000.0
-        except Exception:
-            pass
+    max_proj_task = await Task.find(
+        Task.user_id == current_user.id,
+        Task.project_id == project_id,
+    ).sort(-Task.project_order).first_or_none()
+    project_order = (max_proj_task.project_order + 1000.0) if max_proj_task else 1000.0
 
     task = Task(
         name=data.name,
@@ -163,15 +165,18 @@ async def update_task(
 
     update_data = data.model_dump(exclude_unset=True)
 
-    # Handle project_id conversion
+    # Handle project_id conversion (project_id is required on tasks)
     if "project_id" in update_data:
-        if update_data["project_id"]:
-            try:
-                update_data["project_id"] = PydanticObjectId(update_data["project_id"])
-            except Exception:
-                del update_data["project_id"]
-        else:
-            update_data["project_id"] = None
+        if not update_data["project_id"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="project_id is required")
+        try:
+            proj_oid = PydanticObjectId(update_data["project_id"])
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid project_id")
+        project = await Project.get(proj_oid)
+        if project is None or project.user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        update_data["project_id"] = proj_oid
 
     if update_data:
         update_data["updated_at"] = datetime.utcnow()

@@ -24,11 +24,10 @@ export function TaskDetail() {
     updateTaskStatus,
     completeTask,
     reactivateTask,
-    selectTask,
     unlinkNote,
   } = useTasks();
   const { notes } = useNotes();
-  const { navigateToNote } = useApp();
+  const { openNote, closeFocus, selectedProjectId } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -145,7 +144,7 @@ export function TaskDetail() {
                   Delete
                 </button>
                 <button
-                  onClick={() => selectTask(null)}
+                  onClick={() => closeFocus()}
                   className="px-3 py-1"
                   style={{ color: 'var(--text-muted)' }}
                 >
@@ -264,7 +263,7 @@ export function TaskDetail() {
               <div className="flex items-start justify-between">
                 <div
                   className="cursor-pointer flex-1 min-w-0"
-                  onClick={() => navigateToNote(note.id)}
+                  onClick={() => openNote(note.id, selectedProjectId)}
                 >
                   <span className="text-sm" style={{ color: 'var(--accent)' }}>
                     {note.content.split('\n')[0].substring(0, 80) || 'Untitled Note'}
