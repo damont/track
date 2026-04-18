@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 days
     cors_origins: str = "*"
 
+    # Google OAuth
+    google_client_id: Optional[str] = None
+
     # SMTP / password reset
     smtp_email: Optional[str] = None
     smtp_app_password: Optional[str] = None

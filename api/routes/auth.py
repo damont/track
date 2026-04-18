@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import datetime, timedelta
 
@@ -17,6 +18,7 @@ from api.schemas.dto.auth import (
     PasswordResetRequest,
     PasswordResetConfirm,
     MessageResponse,
+    GoogleLoginRequest,
 )
 from api.utils.auth import (
     hash_password,
@@ -25,6 +27,8 @@ from api.utils.auth import (
     get_current_user,
 )
 from api.services.email import send_password_reset_email
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -116,6 +120,75 @@ async def agent_token(data: AgentTokenRequest):
         access_token=access_token,
         expires_in_days=data.expires_in_days,
     )
+
+
+@router.post("/google", response_model=TokenResponse)
+async def google_login(data: GoogleLoginRequest):
+    settings = get_settings()
+    if not settings.google_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google login not configured",
+        )
+
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+    except ImportError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google auth library not installed",
+        )
+
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            data.id_token, google_requests.Request(), settings.google_client_id
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google token",
+        )
+
+    sub = idinfo.get("sub")
+    email = idinfo.get("email")
+    email_verified = idinfo.get("email_verified", False)
+    name = idinfo.get("name") or (email.split("@")[0] if email else None)
+
+    if not sub or not email or not email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google token missing required claims",
+        )
+
+    user = await User.find_one(User.google_sub == sub)
+
+    if not user:
+        # Link Google to existing email/password user if email matches.
+        user = await User.find_one(User.email == email)
+        if user:
+            user.google_sub = sub
+            user.email_verified = True  # Google has verified the email
+            await user.save()
+        else:
+            user = User(
+                email=email,
+                username=email,
+                hashed_password=None,
+                display_name=name,
+                google_sub=sub,
+                email_verified=True,
+            )
+            await user.insert()
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is disabled",
+        )
+
+    access_token = create_access_token(str(user.id))
+    return TokenResponse(access_token=access_token)
 
 
 @router.get("/me", response_model=UserResponse)

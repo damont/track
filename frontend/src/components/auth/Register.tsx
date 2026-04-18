@@ -1,12 +1,15 @@
 import { useState, FormEvent } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
 interface RegisterProps {
   onSwitchToLogin: () => void;
 }
 
 export function Register({ onSwitchToLogin }: RegisterProps) {
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +30,19 @@ export function Register({ onSwitchToLogin }: RegisterProps) {
     }
   };
 
+  const handleGoogleSuccess = async (credential: string | undefined) => {
+    if (!credential) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      await googleLogin(credential);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-main)' }}>
       <div className="max-w-md w-full space-y-8 p-8 rounded-lg" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
@@ -38,6 +54,24 @@ export function Register({ onSwitchToLogin }: RegisterProps) {
             Create your account
           </p>
         </div>
+        {googleClientId && (
+          <div>
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={(resp) => handleGoogleSuccess(resp.credential)}
+                onError={() => setError('Google login failed')}
+              />
+            </div>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full" style={{ borderTop: '1px solid var(--border-color)' }}></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-2" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-secondary)' }}>or</span>
+              </div>
+            </div>
+          </div>
+        )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="px-4 py-3 rounded" style={{ backgroundColor: 'rgba(200, 100, 100, 0.12)', border: '1px solid rgba(200, 100, 100, 0.25)', color: '#c06464' }}>
