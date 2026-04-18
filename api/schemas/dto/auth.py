@@ -46,5 +46,9 @@ class PasswordResetConfirm(BaseModel):
     new_password: str = Field(..., min_length=6)
 
 
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
 class MessageResponse(BaseModel):
     message: str

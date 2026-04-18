@@ -45,7 +45,7 @@ class ApiClient {
         window.location.href = '/login';
       }
       const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-      throw new Error(error.detail || 'Request failed');
+      throw new ApiError(response.status, error.detail || 'Request failed');
     }
 
     if (response.status === 204) {
@@ -82,7 +82,26 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Login failed' }));
-      throw new Error(error.detail || 'Login failed');
+      throw new ApiError(response.status, error.detail || 'Login failed');
+    }
+
+    const data = await response.json();
+    this.setToken(data.access_token);
+    return data.access_token;
+  }
+
+  async googleLogin(idToken: string): Promise<string> {
+    const response = await fetch(`${API_URL}/api/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id_token: idToken }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Google login failed' }));
+      throw new ApiError(response.status, error.detail || 'Google login failed');
     }
 
     const data = await response.json();
@@ -117,6 +136,15 @@ class ApiClient {
 
   logout() {
     this.setToken(null);
+  }
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
   }
 }
 
