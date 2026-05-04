@@ -4,7 +4,6 @@ import { api } from "../api/client";
 
 export function UserProfile() {
   const { user } = useAuth();
-  const [password, setPassword] = useState('');
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,12 +25,11 @@ export function UserProfile() {
     setIsLoading(true);
 
     try {
-      const result = await api.agentToken(user.email, password, expiresInDays);
+      const result = await api.agentToken(expiresInDays);
       setTokenResult({
         access_token: result.access_token,
         expires_in_days: result.expires_in_days,
       });
-      setPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate token');
     } finally {
@@ -48,7 +46,6 @@ export function UserProfile() {
 
   const handleReset = () => {
     setTokenResult(null);
-    setPassword('');
     setCopied(false);
     setError('');
   };
@@ -164,18 +161,8 @@ export function UserProfile() {
                   {error}
                 </div>
               )}
-              <div>
-                <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md text-sm focus:outline-none"
-                  style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                />
+              <div className="px-3 py-2 rounded text-sm" style={{ backgroundColor: 'rgba(100, 200, 100, 0.08)', border: '1px solid rgba(100, 200, 100, 0.18)', color: 'var(--text-secondary)' }}>
+                Your current signed-in session will be used to create this token.
               </div>
               <div>
                 <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>

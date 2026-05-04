@@ -91,28 +91,11 @@ class ApiClient {
   }
 
   async agentToken(
-    email: string,
-    password: string,
     expiresInDays: number
   ): Promise<{ access_token: string; token_type: string; expires_in_days: number }> {
-    const response = await fetch(`${API_URL}/api/auth/agent-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        expires_in_days: expiresInDays,
-      }),
+    return this.post('/api/auth/agent-token', {
+      expires_in_days: expiresInDays,
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-      throw new Error(error.detail || 'Failed to generate agent token');
-    }
-
-    return response.json();
   }
 
   logout() {

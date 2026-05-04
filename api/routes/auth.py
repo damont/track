@@ -88,28 +88,12 @@ async def login(data: UserLogin):
 
 
 @router.post("/agent-token", response_model=AgentTokenResponse)
-async def agent_token(data: AgentTokenRequest):
-    user = await User.find_one(User.email == data.email)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-
-    if not verify_password(data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account is disabled",
-        )
-
+async def agent_token(
+    data: AgentTokenRequest,
+    current_user: User = Depends(get_current_user),
+):
     access_token = create_access_token(
-        str(user.id), expires_delta=timedelta(days=data.expires_in_days)
+        str(current_user.id), expires_delta=timedelta(days=data.expires_in_days)
     )
 
     return AgentTokenResponse(

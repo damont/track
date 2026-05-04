@@ -11,8 +11,6 @@ interface TokenResult {
 }
 
 export function AgentAuth({ onSwitchToLogin }: AgentAuthProps) {
-  const [email, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +23,7 @@ export function AgentAuth({ onSwitchToLogin }: AgentAuthProps) {
     setIsLoading(true);
 
     try {
-      const result = await api.agentToken(email, password, expiresInDays);
+      const result = await api.agentToken(expiresInDays);
       setTokenResult({
         access_token: result.access_token,
         expires_in_days: result.expires_in_days,
@@ -46,7 +44,6 @@ export function AgentAuth({ onSwitchToLogin }: AgentAuthProps) {
 
   const handleReset = () => {
     setTokenResult(null);
-    setPassword('');
     setCopied(false);
   };
 
@@ -129,35 +126,8 @@ export function AgentAuth({ onSwitchToLogin }: AgentAuthProps) {
               </div>
             )}
             <div className="space-y-4">
-              <div>
-                <label htmlFor="agent-email" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Email
-                </label>
-                <input
-                  id="agent-email"
-                  name="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
-                  style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                />
-              </div>
-              <div>
-                <label htmlFor="agent-password" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Password
-                </label>
-                <input
-                  id="agent-password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 rounded-md focus:outline-none"
-                  style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                />
+              <div className="px-4 py-3 rounded text-sm" style={{ backgroundColor: 'rgba(100, 200, 100, 0.08)', border: '1px solid rgba(100, 200, 100, 0.18)', color: 'var(--text-secondary)' }}>
+                Sign in first, then generate an agent token from your authenticated session.
               </div>
               <div>
                 <label htmlFor="agent-expires" className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
