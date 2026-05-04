@@ -167,6 +167,36 @@ function AppContent() {
           }
         />
         <Route
+          path="/projects/:projectId/tasks"
+          element={
+            <RequireAuth>
+              <AuthedShell>
+                <Workbench />
+              </AuthedShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/projects/:projectId/notes"
+          element={
+            <RequireAuth>
+              <AuthedShell>
+                <Workbench />
+              </AuthedShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/projects/:projectId/insights"
+          element={
+            <RequireAuth>
+              <AuthedShell>
+                <Workbench />
+              </AuthedShell>
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/projects/:projectId/tasks/:taskId"
           element={
             <RequireAuth>

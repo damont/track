@@ -3,10 +3,24 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { useTasks } from '../../context/TaskContext';
 
-export function ProjectRail() {
+interface ProjectRailProps {
+  onNavigate?: () => void;
+}
+
+export function ProjectRail({ onNavigate }: ProjectRailProps = {}) {
   const { user, logout } = useAuth();
-  const { selectedProjectId, isProfile, openProject, openProfile } = useApp();
-  const { projects, createProject } = useTasks();
+  const { selectedProjectId, isProfile, openProject: openProjectAction, openProfile: openProfileAction, openProjectsRoot } = useApp();
+  const { projects, createProject, deleteProject } = useTasks();
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  const openProject = (id: string) => {
+    openProjectAction(id);
+    onNavigate?.();
+  };
+  const openProfile = () => {
+    openProfileAction();
+    onNavigate?.();
+  };
 
   const [showNewProject, setShowNewProject] = useState(false);
   const [newName, setNewName] = useState('');
@@ -20,12 +34,20 @@ export function ProjectRail() {
     setShowNewProject(false);
   };
 
+  const handleDelete = async (projectId: string, name: string) => {
+    if (!confirm(`Delete project "${name}"? All tasks, notes, and insights will be permanently removed.`)) return;
+    await deleteProject(projectId);
+    if (selectedProjectId === projectId) openProjectsRoot();
+  };
+
+  const inDrawer = onNavigate !== undefined;
+
   return (
     <aside
       className="flex flex-col h-full"
       style={{
-        width: 260,
-        minWidth: 260,
+        width: inDrawer ? '100%' : 260,
+        minWidth: inDrawer ? 0 : 260,
         padding: '18px 14px',
         gap: 14,
         background: 'rgba(5, 6, 13, 0.55)',
@@ -59,25 +81,72 @@ export function ProjectRail() {
 
         {projects.map((p) => {
           const isActive = selectedProjectId === p.id && !isProfile;
+          const isHovered = hoveredId === p.id;
           return (
-            <button
+            <div
               key={p.id}
-              type="button"
-              className={`project-rail-item ${isActive ? 'is-active' : ''}`}
-              onClick={() => openProject(p.id)}
+              style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+              onMouseEnter={() => setHoveredId(p.id)}
+              onMouseLeave={() => setHoveredId((id) => (id === p.id ? null : id))}
             >
-              <span
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 9999,
-                  background: p.color || 'var(--accent)',
-                  boxShadow: `0 0 8px ${p.color || 'rgba(60,194,255,0.7)'}`,
-                  flex: '0 0 auto',
+              <button
+                type="button"
+                className={`project-rail-item ${isActive ? 'is-active' : ''}`}
+                onClick={() => openProject(p.id)}
+                style={{ flex: 1, paddingRight: 28 }}
+              >
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 9999,
+                    background: p.color || 'var(--accent)',
+                    boxShadow: `0 0 8px ${p.color || 'rgba(60,194,255,0.7)'}`,
+                    flex: '0 0 auto',
+                  }}
+                />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={`Delete project ${p.name}`}
+                title="Delete project"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(p.id, p.name);
                 }}
-              />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-            </button>
+                style={{
+                  position: 'absolute',
+                  right: 6,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 20,
+                  height: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  opacity: isHovered || isActive ? 1 : 0,
+                  transition: 'opacity 120ms, color 120ms, background 120ms',
+                  fontSize: 14,
+                  lineHeight: 1,
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.color = 'var(--danger)';
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                ×
+              </button>
+            </div>
           );
         })}
 
