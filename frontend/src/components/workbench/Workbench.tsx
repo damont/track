@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp, TabKind } from '../../context/AppContext';
 import { useTasks } from '../../context/TaskContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { ActiveProtocolsPanel } from './ActiveProtocolsPanel';
 import { ContextDirectivesPanel } from './ContextDirectivesPanel';
 import { AgentInsightsPanel } from './AgentInsightsPanel';
 
 export function Workbench() {
-  const { selectedProjectId, focusKind, openProject, closeFocus } = useApp();
+  const { selectedProjectId, focusKind, activeTab, openProject, openTab, closeFocus } = useApp();
   const { projects } = useTasks();
+  const isMobile = useIsMobile();
 
   const project = useMemo(
     () => projects.find((p) => p.id === selectedProjectId) || null,
@@ -44,6 +46,19 @@ export function Workbench() {
             ))}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 10, minHeight: 0 }}>
+        <MobileTabBar active={activeTab} onSelect={(t) => openTab(t)} />
+        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+          {activeTab === 'tasks' && <ActiveProtocolsPanel expanded collapsed={false} />}
+          {activeTab === 'notes' && <ContextDirectivesPanel expanded collapsed={false} />}
+          {activeTab === 'insights' && <AgentInsightsPanel expanded collapsed={false} />}
+        </div>
       </div>
     );
   }
@@ -154,6 +169,60 @@ export function Workbench() {
           collapsed={focusKind !== null && focusKind !== 'insights'}
         />
       </div>
+    </div>
+  );
+}
+
+interface MobileTabBarProps {
+  active: TabKind;
+  onSelect: (tab: TabKind) => void;
+}
+
+function MobileTabBar({ active, onSelect }: MobileTabBarProps) {
+  const tabs: { key: TabKind; label: string }[] = [
+    { key: 'tasks', label: 'Tasks' },
+    { key: 'notes', label: 'Notes' },
+    { key: 'insights', label: 'Insights' },
+  ];
+  return (
+    <div
+      role="tablist"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 4,
+        padding: 4,
+        borderRadius: 10,
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid var(--panel-border)',
+      }}
+    >
+      {tabs.map((t) => {
+        const isActive = active === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onSelect(t.key)}
+            style={{
+              padding: '8px 10px',
+              borderRadius: 8,
+              border: 'none',
+              background: isActive ? 'var(--accent)' : 'transparent',
+              color: isActive ? '#03040a' : 'var(--text-secondary)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: isActive ? 'var(--accent-glow)' : 'none',
+              transition: 'background 120ms, color 120ms',
+            }}
+          >
+            {t.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
